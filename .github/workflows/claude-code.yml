@@ -56,4 +56,4 @@ jobs:
         env:
           ANTHROPIC_VERTEX_PROJECT_ID: ${{ steps.auth.outputs.project_id }}
           CLOUD_ML_REGION: us-east5
-          BASE_BRANCH: develop
+          BASE_BRANCH: main
