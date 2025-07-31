@@ -1,42 +1,29 @@
 """Unit tests for the MCP server"""
 
-import pytest
-from unittest.mock import patch, MagicMock
-from hatena_blog_mcp.server import create_server
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
+
+from hatena_blog_mcp.server import hello_world
 
 
-@pytest.mark.asyncio
-async def test_create_server():
-    """Test server creation"""
-    server = create_server()
-    assert server is not None
-    
-
-@pytest.mark.asyncio
-async def test_list_tools():
-    """Test tools listing"""
-    server = create_server()
-    
-    # Mock the list_tools handler
-    tools = await server._handlers["list_tools"]()
-    
-    assert len(tools) == 1
-    assert tools[0].name == "hello_world"
-    assert "hello world tool" in tools[0].description
+def test_hello_world_default():
+    """Test hello_world tool with default parameters"""
+    result = hello_world()
+    assert "Hello, World!" in result
+    assert "Hatena Blog MCP Server" in result
 
 
-@pytest.mark.asyncio
-async def test_hello_world_tool():
-    """Test hello_world tool execution"""
-    server = create_server()
-    
-    # Test with default name
-    result = await server._handlers["call_tool"]("hello_world", {})
-    assert len(result) == 1
-    assert "Hello, World!" in result[0].text
-    assert "Hatena Blog MCP Server" in result[0].text
-    
-    # Test with custom name
-    result = await server._handlers["call_tool"]("hello_world", {"name": "Claude"})
-    assert len(result) == 1
-    assert "Hello, Claude!" in result[0].text
+def test_hello_world_custom_name():
+    """Test hello_world tool with custom name"""
+    result = hello_world("Claude")
+    assert "Hello, Claude!" in result
+    assert "Hatena Blog MCP Server" in result
+
+
+def test_hello_world_empty_name():
+    """Test hello_world tool with empty name"""
+    result = hello_world("")
+    assert "Hello, !" in result
+    assert "Hatena Blog MCP Server" in result
