@@ -20,9 +20,9 @@ def hello_world(
     name: Annotated[str, "Name to say hello to"] = "World"
 ) -> str:
     """A simple hello world tool for testing MCP server connectivity"""
-    
+
     logger.info(f"Hello world tool called with name: {name}")
-    
+
     try:
         response_text = f"Hello, {name}! This is the Hatena Blog MCP Server."
         return response_text
@@ -31,7 +31,7 @@ def hello_world(
         return f"エラーが発生しました: {str(e)}"
 
 
-def main():
+def main() -> None:
     """Main entry point for the MCP server"""
     logger.info("Starting Hatena Blog MCP Server with FastMCP")
     mcp.run()
