@@ -56,10 +56,11 @@ Kiro-style Spec Driven Development implementation using claude code slash comman
 6. **Keep steering current**: Run `/kiro:steering` after significant changes
 7. **Check spec compliance**: Use `/kiro:spec-status` to verify alignment
 8. **Branch strategy**: Follow defined branch workflow in tech.md (feature branches with PR approval)
-9. **Capture learnings**: Document post-development rules in `.kiro/development-learnings.md`
-10. **Session structure**: Separate AI-assisted work from human project management tasks
-11. **Reference analysis**: Research similar projects during design phase
-12. **Library verification**: Test imports and usage patterns before main implementation
+9. **Pull Request creation**: Claude Code can create GitHub pull requests using `gh pr create` command - no need for manual PR creation
+10. **Capture learnings**: Document post-development rules in `.kiro/development-learnings.md`
+11. **Session structure**: Separate AI-assisted work from human project management tasks
+12. **Reference analysis**: Research similar projects during design phase
+13. **Library verification**: Test imports and usage patterns before main implementation
 
 ## Steering Configuration
 
