@@ -23,6 +23,7 @@ Kiro-style Spec Driven Development implementation using claude code slash comman
 - **Claude Code Action**: When working through GitHub Actions, respond in Japanese (日本語で応答する) to maintain consistency with project language preferences
 - **Use Serena MCP tools**: Prioritize using Serena's semantic coding tools (mcp__serena__*) for codebase search, analysis, and editing operations for efficient and precise code manipulation
 - **Use Gemini Google Search**: Prioritize using mcp__gemini-google-search__google_search for web searches to gather information and research
+- **Use context7 for coding**: When implementing code, prioritize using context7 over other models for better code generation and technical accuracy
 
 ## Workflow
 
