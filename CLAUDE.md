@@ -23,6 +23,7 @@ Kiro-style Spec Driven Development implementation using claude code slash comman
 - **Claude Code Action**: When working through GitHub Actions, respond in Japanese (日本語で応答する) to maintain consistency with project language preferences
 - **Use Serena MCP tools**: Prioritize using Serena's semantic coding tools (mcp__serena__*) for codebase search, analysis, and editing operations for efficient and precise code manipulation
 - **Use Gemini Google Search**: Prioritize using mcp__gemini-google-search__google_search for web searches to gather information and research
+- **Use context7 for coding**: When implementing code, prioritize using context7 over other models for better code generation and technical accuracy
 
 ## Workflow
 
@@ -56,10 +57,11 @@ Kiro-style Spec Driven Development implementation using claude code slash comman
 6. **Keep steering current**: Run `/kiro:steering` after significant changes
 7. **Check spec compliance**: Use `/kiro:spec-status` to verify alignment
 8. **Branch strategy**: Follow defined branch workflow in tech.md (feature branches with PR approval)
-9. **Capture learnings**: Document post-development rules in `.kiro/development-learnings.md`
-10. **Session structure**: Separate AI-assisted work from human project management tasks
-11. **Reference analysis**: Research similar projects during design phase
-12. **Library verification**: Test imports and usage patterns before main implementation
+9. **Pull Request creation**: Claude Code can create GitHub pull requests using `gh pr create` command - no need for manual PR creation
+10. **Capture learnings**: Document post-development rules in `.kiro/development-learnings.md`
+11. **Session structure**: Separate AI-assisted work from human project management tasks
+12. **Reference analysis**: Research similar projects during design phase
+13. **Library verification**: Test imports and usage patterns before main implementation
 
 ## Steering Configuration
 
