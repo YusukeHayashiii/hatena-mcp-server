@@ -3,6 +3,7 @@ Integration tests for API Communication Infrastructure.
 API通信基盤の統合テストです。
 """
 
+import os
 import pytest
 from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timezone
@@ -18,10 +19,10 @@ from hatena_blog_mcp.models import AuthConfig, BlogPost
 
 @pytest.fixture
 def auth_config():
-    """認証設定のフィクスチャ"""
+    """認証設定のフィクスチャ（テスト専用ダミー値）"""
     return AuthConfig(
-        username="testuser",
-        password="testkey123"
+        username=os.getenv("TEST_USERNAME", "test_user_mock"),
+        password=os.getenv("TEST_PASSWORD", "mock_password_not_real_for_testing_only")
     )
 
 
@@ -43,7 +44,7 @@ def sample_blog_post():
     return BlogPost(
         title="統合テスト記事",
         content="<p>これは統合テストの記事です。</p>",
-        author="testuser",
+        author="test_user",
         summary="統合テスト用の記事",
         categories=["テスト", "統合"],
         published=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
@@ -65,12 +66,12 @@ class TestApiCommunicationIntegration:
         # XMLの内容を検証
         assert "統合テスト記事" in xml_string
         assert "これは統合テストの記事です" in xml_string
-        assert "testuser" in xml_string
+        assert "test_user" in xml_string
         
         # 2. HTTPクライアントでのPOSTリクエストシミュレート
         async with HatenaHttpClient(
             auth_manager=auth_manager,
-            username="testuser",
+            username="test_user",
             blog_id="testblog"
         ) as client:
             
@@ -82,11 +83,11 @@ class TestApiCommunicationIntegration:
                 <id>tag:example.com,2024:entry-123</id>
                 <title>統合テスト記事</title>
                 <content type="text/html">&lt;p&gt;これは統合テストの記事です。&lt;/p&gt;</content>
-                <author><name>testuser</name></author>
+                <author><name>test_user</name></author>
                 <published>2024-01-01T12:00:00Z</published>
                 <updated>2024-01-01T12:00:00Z</updated>
-                <link rel="edit" href="https://blog.hatena.ne.jp/testuser/testblog/atom/entry/123" />
-                <link rel="alternate" type="text/html" href="https://testuser.hatenablog.com/entry/2024/01/01/120000" />
+                <link rel="edit" href="https://blog.hatena.ne.jp/test_user/testblog/atom/entry/123" />
+                <link rel="alternate" type="text/html" href="https://test_user.hatenablog.com/entry/2024/01/01/120000" />
             </entry>"""
             
             with patch.object(client, '_make_request', new_callable=AsyncMock) as mock_request:
@@ -102,7 +103,7 @@ class TestApiCommunicationIntegration:
                 mock_request.assert_called_once()
                 call_args = mock_request.call_args
                 assert call_args[0][0] == "POST"
-                assert call_args[0][1] == "https://blog.hatena.ne.jp/testuser/testblog/atom/entry"
+                assert call_args[0][1] == "https://blog.hatena.ne.jp/test_user/testblog/atom/entry"
                 assert call_args[1]['headers'] is None
                 
                 # XMLコンテンツの基本確認
@@ -116,7 +117,7 @@ class TestApiCommunicationIntegration:
         # 解析結果の検証
         assert response_post.id == "tag:example.com,2024:entry-123"
         assert response_post.title == "統合テスト記事"
-        assert response_post.author == "testuser"
+        assert response_post.author == "test_user"
         assert "blog.hatena.ne.jp" in response_post.edit_url
         assert "hatenablog.com" in response_post.alternate_url
 
@@ -125,7 +126,7 @@ class TestApiCommunicationIntegration:
         """認証統合のテスト"""
         async with HatenaHttpClient(
             auth_manager=auth_manager,
-            username="testuser",
+            username="test_user",
             blog_id="testblog"
         ) as client:
             
@@ -143,7 +144,7 @@ class TestApiCommunicationIntegration:
             assert "PasswordDigest=" in wsse_header
             assert "Nonce=" in wsse_header
             assert "Created=" in wsse_header
-            assert "testuser" in wsse_header
+            assert "test_user" in wsse_header
 
     @pytest.mark.asyncio
     async def test_rate_limiting_integration(self, auth_manager):
@@ -156,7 +157,7 @@ class TestApiCommunicationIntegration:
         
         async with HatenaHttpClient(
             auth_manager=auth_manager,
-            username="testuser",
+            username="test_user",
             blog_id="testblog",
             rate_limiter=rate_limiter
         ) as client:
@@ -188,7 +189,7 @@ class TestApiCommunicationIntegration:
         """エラーハンドリング統合のテスト"""
         async with HatenaHttpClient(
             auth_manager=auth_manager,
-            username="testuser",
+            username="test_user",
             blog_id="testblog",
             max_retries=1
         ) as client:
@@ -226,7 +227,7 @@ class TestApiCommunicationIntegration:
         """XMLとHTTPクライアントの往復変換テスト"""
         async with HatenaHttpClient(
             auth_manager=auth_manager,
-            username="testuser",
+            username="test_user",
             blog_id="testblog"
         ) as client:
             
@@ -270,7 +271,7 @@ class TestApiCommunicationIntegration:
         
         async with HatenaHttpClient(
             auth_manager=auth_manager,
-            username="testuser",
+            username="test_user",
             blog_id="testblog",
             rate_limiter=rate_limiter
         ) as client:

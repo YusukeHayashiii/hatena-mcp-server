@@ -19,10 +19,10 @@ from hatena_blog_mcp.rate_limiter import RateLimiter
 
 @pytest.fixture
 def auth_config():
-    """認証設定のフィクスチャ"""
+    """認証設定のフィクスチャ（テスト専用ダミー値）"""
     return AuthConfig(
-        username="testuser",
-        password="testkey123"
+        username="test_user_mock",
+        password="mock_password_for_unit_testing"
     )
 
 
@@ -43,7 +43,7 @@ async def http_client(auth_manager, rate_limiter):
     """HTTPクライアントのフィクスチャ"""
     client = HatenaHttpClient(
         auth_manager=auth_manager,
-        username="testuser",
+        username="test_user",
         blog_id="testblog",
         rate_limiter=rate_limiter
     )
@@ -58,33 +58,33 @@ class TestHatenaHttpClient:
         """初期化のテスト"""
         client = HatenaHttpClient(
             auth_manager=auth_manager,
-            username="testuser",
+            username="test_user",
             blog_id="testblog",
             timeout=15.0,
             max_retries=2,
             rate_limiter=rate_limiter
         )
         
-        assert client.username == "testuser"
+        assert client.username == "test_user"
         assert client.blog_id == "testblog"
         assert client.timeout == 15.0
         assert client.max_retries == 2
         assert client.rate_limiter is rate_limiter
-        assert client.atom_base_url == "https://blog.hatena.ne.jp/testuser/testblog/atom"
+        assert client.atom_base_url == "https://blog.hatena.ne.jp/test_user/testblog/atom"
 
     def test_build_url(self, http_client):
         """URL構築のテスト"""
         # パスが/で始まる場合
         url = http_client._build_url("/entry")
-        assert url == "https://blog.hatena.ne.jp/testuser/testblog/atom/entry"
+        assert url == "https://blog.hatena.ne.jp/test_user/testblog/atom/entry"
         
         # パスが/で始まらない場合
         url = http_client._build_url("entry")
-        assert url == "https://blog.hatena.ne.jp/testuser/testblog/atom/entry"
+        assert url == "https://blog.hatena.ne.jp/test_user/testblog/atom/entry"
         
         # 複雑なパス
         url = http_client._build_url("entry/12345")
-        assert url == "https://blog.hatena.ne.jp/testuser/testblog/atom/entry/12345"
+        assert url == "https://blog.hatena.ne.jp/test_user/testblog/atom/entry/12345"
 
     @pytest.mark.asyncio
     async def test_successful_request(self, http_client):
@@ -194,7 +194,7 @@ class TestHatenaHttpClient:
             assert response is mock_response
             mock_make.assert_called_once_with(
                 "GET",
-                "https://blog.hatena.ne.jp/testuser/testblog/atom/entry",
+                "https://blog.hatena.ne.jp/test_user/testblog/atom/entry",
                 params={"page": 1},
                 headers=None
             )
@@ -220,7 +220,7 @@ class TestHatenaHttpClient:
             # XMLがバイト列に変換されて送信されることを確認
             call_args = mock_make.call_args
             assert call_args[0][0] == "POST"
-            assert call_args[0][1] == "https://blog.hatena.ne.jp/testuser/testblog/atom/entry"
+            assert call_args[0][1] == "https://blog.hatena.ne.jp/test_user/testblog/atom/entry"
             
             # contentがバイト列であることを確認
             content = call_args[1]['content']
@@ -264,7 +264,7 @@ class TestHatenaHttpClient:
             assert response is mock_response
             mock_make.assert_called_once_with(
                 "PUT",
-                "https://blog.hatena.ne.jp/testuser/testblog/atom/entry/123",
+                "https://blog.hatena.ne.jp/test_user/testblog/atom/entry/123",
                 content=xml_bytes,
                 headers=None
             )
@@ -283,7 +283,7 @@ class TestHatenaHttpClient:
             assert response is mock_response
             mock_make.assert_called_once_with(
                 "DELETE",
-                "https://blog.hatena.ne.jp/testuser/testblog/atom/entry/123",
+                "https://blog.hatena.ne.jp/test_user/testblog/atom/entry/123",
                 headers=None
             )
 
@@ -306,7 +306,7 @@ class TestHatenaHttpClient:
         """コンテキストマネージャーのテスト"""
         async with HatenaHttpClient(
             auth_manager=auth_manager,
-            username="testuser",
+            username="test_user",
             blog_id="testblog"
         ) as client:
             assert client is not None
@@ -322,9 +322,9 @@ class TestHatenaHttpClient:
         
         async with HatenaHttpClient(
             auth_manager=auth_manager,
-            username="testuser",
+            username="test_user",
             blog_id="testblog",
             base_url=custom_url
         ) as client:
             assert client.base_url == custom_url
-            assert client.atom_base_url == f"{custom_url}/testuser/testblog/atom"
+            assert client.atom_base_url == f"{custom_url}/test_user/testblog/atom"

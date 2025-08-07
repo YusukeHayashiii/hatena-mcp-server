@@ -18,36 +18,36 @@ class TestAuthenticationManager:
 
     def test_init_valid_config(self):
         """有効な設定での初期化テスト"""
-        config = AuthConfig(username="testuser", password="testpass")
+        config = AuthConfig(username="test_user", password="mock_password_test")
         auth_manager = AuthenticationManager(config)
 
-        assert auth_manager.config.username == "testuser"
-        assert auth_manager.config.password == "testpass"
+        assert auth_manager.config.username == "test_user"
+        assert auth_manager.config.password == "mock_password_test"
 
     def test_init_empty_username(self):
         """空のユーザー名での初期化テスト"""
-        config = AuthConfig(username="", password="testpass")
+        config = AuthConfig(username="", password="mock_password_test")
 
         with pytest.raises(ValueError, match="ユーザー名が設定されていません"):
             AuthenticationManager(config)
 
     def test_init_empty_password(self):
         """空のパスワードでの初期化テスト"""
-        config = AuthConfig(username="testuser", password="")
+        config = AuthConfig(username="test_user", password="")
 
         with pytest.raises(ValueError, match="APIキーが設定されていません"):
             AuthenticationManager(config)
 
     def test_validate_credentials_valid(self):
         """有効な認証情報の検証テスト"""
-        config = AuthConfig(username="testuser", password="testpass")
+        config = AuthConfig(username="test_user", password="mock_password_test")
         auth_manager = AuthenticationManager(config)
 
         assert auth_manager.validate_credentials() is True
 
     def test_validate_credentials_invalid(self):
         """無効な認証情報の検証テスト"""
-        config = AuthConfig(username="testuser", password="testpass")
+        config = AuthConfig(username="test_user", password="mock_password_test")
         auth_manager = AuthenticationManager(config)
 
         # パスワードを空にして無効化
@@ -63,7 +63,7 @@ class TestAuthenticationManager:
         mock_datetime.now.return_value.isoformat.return_value.replace.return_value = "2024-01-01T00:00:00Z"
         mock_token_bytes.return_value = b'\\x00\\x01\\x02\\x03\\x04\\x05\\x06\\x07\\x08\\x09\\x0a\\x0b\\x0c\\x0d\\x0e\\x0f'
 
-        config = AuthConfig(username="testuser", password="testpass")
+        config = AuthConfig(username="test_user", password="mock_password_test")
         auth_manager = AuthenticationManager(config)
 
         headers = auth_manager.get_auth_headers()
@@ -96,7 +96,7 @@ class TestAuthenticationManager:
         mock_datetime.now.return_value.isoformat.return_value.replace.return_value = created
         mock_token_bytes.return_value = nonce_bytes
 
-        config = AuthConfig(username="testuser", password="testpass")
+        config = AuthConfig(username="test_user", password="mock_password_test")
         auth_manager = AuthenticationManager(config)
 
         headers = auth_manager.get_auth_headers()
@@ -110,7 +110,7 @@ class TestAuthenticationManager:
 
     def test_get_auth_headers_invalid_credentials(self):
         """無効な認証情報でのヘッダー生成テスト"""
-        config = AuthConfig(username="testuser", password="testpass")
+        config = AuthConfig(username="test_user", password="mock_password_test")
         auth_manager = AuthenticationManager(config)
 
         # 認証情報を無効化
@@ -121,7 +121,7 @@ class TestAuthenticationManager:
 
     def test_create_auth_error_basic(self):
         """基本的な認証エラー作成テスト"""
-        config = AuthConfig(username="testuser", password="testpass")
+        config = AuthConfig(username="test_user", password="mock_password_test")
         auth_manager = AuthenticationManager(config)
 
         error = auth_manager.create_auth_error("認証に失敗しました")
@@ -133,7 +133,7 @@ class TestAuthenticationManager:
 
     def test_create_auth_error_with_details(self):
         """詳細情報付き認証エラー作成テスト"""
-        config = AuthConfig(username="testuser", password="testpass")
+        config = AuthConfig(username="test_user", password="mock_password_test")
         auth_manager = AuthenticationManager(config)
 
         details = {"status_code": 401, "reason": "Unauthorized"}
@@ -146,7 +146,7 @@ class TestAuthenticationManager:
 
     def test_multiple_auth_headers_unique_nonce(self):
         """複数回のヘッダー生成でナンスが異なることを確認"""
-        config = AuthConfig(username="testuser", password="testpass")
+        config = AuthConfig(username="test_user", password="mock_password_test")
         auth_manager = AuthenticationManager(config)
 
         headers1 = auth_manager.get_auth_headers()
@@ -157,7 +157,7 @@ class TestAuthenticationManager:
 
     def test_auth_headers_contain_current_time(self):
         """認証ヘッダーに現在時刻が含まれることを確認"""
-        config = AuthConfig(username="testuser", password="testpass")
+        config = AuthConfig(username="test_user", password="mock_password_test")
         auth_manager = AuthenticationManager(config)
 
         # テスト実行前の時刻

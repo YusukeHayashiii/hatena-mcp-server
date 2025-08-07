@@ -35,31 +35,31 @@ class TestAuthConfig:
 
     def test_valid_auth_config(self):
         """有効な認証設定テスト"""
-        config = AuthConfig(username="testuser", password="testpass")
+        config = AuthConfig(username="test_user", password="mock_password_test")
 
-        assert config.username == "testuser"
-        assert config.password == "testpass"
+        assert config.username == "test_user"
+        assert config.password == "mock_password_test"
 
     def test_auth_config_password_hidden_in_repr(self):
         """パスワードが表示に含まれないことを確認"""
-        config = AuthConfig(username="testuser", password="secret123")
+        config = AuthConfig(username="test_user", password="mock_secret_for_testing")
 
         config_str = str(config)
-        assert "testuser" in config_str
-        assert "secret123" not in config_str
+        assert "test_user" in config_str
+        assert "mock_secret_for_testing" not in config_str
 
     def test_auth_config_missing_fields(self):
         """必須フィールド不足のテスト"""
         with pytest.raises(ValidationError):
-            AuthConfig(username="testuser")
+            AuthConfig(username="test_user")
 
         with pytest.raises(ValidationError):
-            AuthConfig(password="testpass")
+            AuthConfig(password="mock_password_test")
 
     def test_auth_config_extra_fields_forbidden(self):
         """余分なフィールドが拒否されることを確認"""
         with pytest.raises(ValidationError):
-            AuthConfig(username="testuser", password="testpass", extra_field="value")
+            AuthConfig(username="test_user", password="mock_password_test", extra_field="value")
 
 
 class TestBlogConfig:
@@ -69,37 +69,37 @@ class TestBlogConfig:
         """有効なブログ設定テスト"""
         config = BlogConfig(
             username="testuser",
-            blog_id="testblog",
-            api_key="testkey"
+            blog_id="test_blog",
+            api_key="mock_api_key_test"
         )
 
         assert config.username == "testuser"
-        assert config.blog_id == "testblog"
-        assert config.api_key == "testkey"
+        assert config.blog_id == "test_blog"
+        assert config.api_key == "mock_api_key_test"
 
     def test_blog_config_api_key_hidden_in_repr(self):
         """APIキーが表示に含まれないことを確認"""
         config = BlogConfig(
-            username="testuser",
-            blog_id="testblog",
-            api_key="secret123"
+            username="test_user",
+            blog_id="test_blog",
+            api_key="mock_secret_for_testing"
         )
 
         config_str = str(config)
-        assert "testuser" in config_str
-        assert "testblog" in config_str
-        assert "secret123" not in config_str
+        assert "test_user" in config_str
+        assert "test_blog" in config_str
+        assert "mock_secret_for_testing" not in config_str
 
     def test_blog_config_missing_fields(self):
         """必須フィールド不足のテスト"""
         with pytest.raises(ValidationError):
-            BlogConfig(username="testuser", blog_id="testblog")
+            BlogConfig(username="testuser", blog_id="test_blog")
 
         with pytest.raises(ValidationError):
-            BlogConfig(username="testuser", api_key="testkey")
+            BlogConfig(username="testuser", api_key="mock_api_key_test")
 
         with pytest.raises(ValidationError):
-            BlogConfig(blog_id="testblog", api_key="testkey")
+            BlogConfig(blog_id="test_blog", api_key="mock_api_key_test")
 
 
 class TestBlogPost:
