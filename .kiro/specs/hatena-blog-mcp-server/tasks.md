@@ -150,86 +150,91 @@
 
 ## 🚀 Next Steps for Implementation
 
-### ✅ 完了済み実装状況（2025-07-30）
+### ✅ 完了済み実装状況（2025-08-06 更新）
 
-#### **✅ Step 1: プロジェクト基盤セットアップ（タスク1）** - **完了**
+#### **✅ タスク1: プロジェクト基盤セットアップ** - **完了**
 - ✅ リモートリポジトリのクローンと初期化
 - ✅ Python 3.12プロジェクト初期化（uv使用）
 - ✅ MCP依存関係の追加（mcp[cli] + 関連ライブラリ）
 - ✅ 基本的なディレクトリ構造作成（src/tests/docs）
 - ✅ pyproject.toml設定（開発依存関係、ビルド設定含む）
 
-#### **✅ Step 2: 最小限のMCPサーバー実装** - **完了**
-- ✅ `src/hatena_blog_mcp/server.py` - hello_worldツール付きMCPサーバー
+#### **✅ タスク6: MCPサーバーコア実装** - **完了**
+- ✅ `src/hatena_blog_mcp/server.py` - FastMCP実装
+- ✅ hello_worldツール付きMCPサーバー
+- ✅ MCPライブラリインポートエラー修正
 - ✅ 基本的なツールレジストリとハンドラー実装
-- ✅ 初期ユニットテスト作成（`tests/unit/test_server.py`）
-- ✅ Git管理開始：`feature/initial-setup`ブランチでコミット・プッシュ完了
 
-### 🔄 次回開発セッション手順（修正版）
+#### **✅ タスク3: 認証マネージャー実装** - **完了**
+- ✅ WSSE認証ヘッダー生成機能の実装
+- ✅ 設定ファイル（.env, JSON, INI）からの認証情報読み込み機能
+- ✅ インタラクティブセットアップスクリプトの作成
+- ✅ 認証情報検証とエラーハンドリングのテスト作成
+- ✅ データモデル（AuthConfig, BlogConfig, ErrorInfo等）実装
+- ✅ 包括的テストスイート（53テストケース）作成
 
-#### **Step 1: feature/initial-setup ブランチでの残タスク完了**（AI支援）
+### 🔄 次回開発セッション手順
+
+#### **Step 1: mainブランチ同期とブランチ作成**（AI支援）
 ```bash
 cd hatena-mcp-server
-git checkout feature/initial-setup
-# 1. MCPライブラリインポートエラーの修正
-# 2. 動作確認とテスト実行  
-# 3. コミット・プッシュでブランチ作業完了
+git checkout main
+git pull origin main  # PR#4マージ後の最新状態を取得
+git checkout -b feature/api-communication
 ```
 
-**⚠️ 緊急修正タスク：MCPライブラリインポートエラー対応**
-- **現在のエラー**: `ImportError: cannot import name 'McpServer' from 'mcp'`
-- **対応方法**: zenn_mcp_devプロジェクトの実装を参考に修正
-- **参考ファイル**: `zenn_mcp_dev/src/zenn_mcp/server.py`
+#### **Step 2: はてなブログAPI通信基盤の実装**（AI支援）
+**タスク4: はてなブログAPI通信基盤の実装**
+- HTTPクライアント（httpx）の実装
+- AtomPub XMLパーシング・生成機能（lxml使用）
+- ネットワークエラー処理と自動リトライ機能
+- API制限対応とレート制限機能
+- API通信基盤のテスト作成
 
-**MCPサーバー動作確認**
-- インポートエラー修正後の動作テスト
-- Hello Worldツールの実際の動作確認
-- MCPクライアントとの通信テスト
+### 📋 次回実装タスクの優先度
 
-#### **Step 2: プロジェクト管理作業**（開発者実施）
-```bash
-# 1. プルリクエストの作成・確認・承認
-# 2. mainブランチへのマージ
-# 3. Claude Code Action設定の確認・実施
-```
+#### 🔥 **高優先度** - API通信基盤（タスク4）
+1. **HTTPクライアント実装**: httpx + WSSE認証統合
+2. **AtomPub XML処理**: lxmlでのパーシング・生成
+3. **エラーハンドリング**: ネットワーク・API制限対応
+4. **基本テスト**: モック環境での動作確認
 
-**CI/CD設定**
-- `.github/workflows/claude-code.yml` の設定
-- 参考ファイル：`zenn_mcp_dev/.github/workflows/claude-code.yml`
-- セットアップガイド：`zenn_mcp_dev/docs/github-actions-setup.md`
+#### 🎯 **中優先度** - ブログサービス層（タスク5）
+5. **BlogPostService実装**: CRUD操作（create, update, get, list）
+6. **統合テスト**: 実際のAPI通信テスト
+7. **MCPツール統合**: サービス層とMCPツールの結合
 
-#### **Step 3: 次フェーズの実装開始**（AI支援）
-```bash
-# 新しいfeatureブランチで認証マネージャーの実装開始
-```
+### 🛠️ 技術仕様参考
 
-### 実装優先度（手戻り最小化）
-1. **高優先度**: タスク1（プロジェクト基盤） → タスク6（MCPサーバーコア）
-2. **中優先度**: タスク3（認証マネージャー） → タスク7（MCPツール）
-3. **低優先度**: タスク9-12（テスト・統合・ドキュメント）
+**はてなブログ AtomPub API**:
+- ベースURL: `https://blog.hatena.ne.jp/{username}/{blog_id}/atom`
+- 認証: WSSE認証（実装済み）
+- フォーマット: AtomPub XML
 
-### 開発時の注意点
-- **小さな単位での実装**: 各機能を最小限で実装し、動作確認してから拡張
-- **MCP SDK活用**: 公式ドキュメントとサンプルコードを参照
-- **段階的検証**: 各フェーズで必ず動作確認を実施
+**使用ライブラリ**:
+- httpx: 非同期HTTP通信
+- lxml: XML処理
+- pydantic: データ検証（実装済み）
 
-### 手戻り発生時の対応
-- 仕様書の更新が必要な場合：`requirements.md`, `design.md`, `tasks.md`を適宜修正
-- アーキテクチャ変更が必要な場合：設計の見直しと相談
+### 📚 参考資料
+- [はてなブログAtomPub API](https://kita127.hatenablog.com/entry/2023/05/17/004937)
+- 認証設定: `.env.example`ファイル参照
 
-### 📋 現在の実装タスクステータス更新
+### 📊 現在の実装進捗
 
-**タスク1**: ✅ **完了** - プロジェクト基盤セットアップ  
-**タスク6**: 🔄 **未完了** - MCPサーバーコア（インポートエラー要修正）  
-**タスク3**: ⏳ **未着手** - 認証マネージャーの実装  
-**タスク7**: ⏳ **未着手** - MCPツール実装  
-**タスク13-14**: ⏳ **未着手** - 開発プロセス改善・ナレッジ蓄積
+**✅ 完了済み**:
+- タスク1: プロジェクト基盤セットアップ
+- タスク3: 認証マネージャーの実装  
+- タスク6: MCPサーバーコア
 
-**現在の状況**: feature/initial-setupブランチでの作業が未完了、インポートエラー修正が最優先タスク
+**🔄 次回実装予定**:
+- **タスク4**: はてなブログAPI通信基盤の実装
+- **タスク5**: ブログサービス層の実装
+- **タスク7**: MCPツール実装
 
 **次回の開始コマンド**:
 ```bash
 cd hatena-mcp-server
-git checkout feature/initial-setup
-# MCPライブラリインポートエラーの修正から開始
+git checkout main && git pull origin main
+git checkout -b feature/api-communication
 ```
