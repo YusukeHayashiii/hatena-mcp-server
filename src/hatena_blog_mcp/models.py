@@ -13,7 +13,9 @@ class ErrorType(str, Enum):
     """エラータイプの列挙"""
     AUTH_ERROR = "auth_error"
     API_LIMIT_ERROR = "api_limit_error"
+    RATE_LIMIT_ERROR = "rate_limit_error"
     NETWORK_ERROR = "network_error"
+    DATA_ERROR = "data_error"
     VALIDATION_ERROR = "validation_error"
     NOT_FOUND_ERROR = "not_found_error"
     PERMISSION_ERROR = "permission_error"
@@ -41,6 +43,21 @@ class BlogPost(BaseModel):
     title: str = Field(..., description="記事タイトル")
     content: str = Field(..., description="記事本文")
     categories: list[str] = Field(default_factory=list, description="カテゴリ一覧")
+    
+    # AtomPub用の追加フィールド
+    id: str | None = Field(None, description="AtomエントリID")
+    author: str | None = Field(None, description="記事作成者")
+    summary: str | None = Field(None, description="記事概要")
+    published: datetime | None = Field(None, description="公開日時")
+    updated: datetime | None = Field(None, description="更新日時")
+    draft: bool | None = Field(None, description="下書きフラグ")
+    
+    # URL情報
+    edit_url: str | None = Field(None, description="編集URL")
+    self_url: str | None = Field(None, description="自己参照URL")
+    alternate_url: str | None = Field(None, description="代替URL（ブログ記事URL）")
+    
+    # 従来のフィールド（互換性のため）
     post_id: str | None = Field(None, description="記事ID")
     post_url: str | None = Field(None, description="記事URL")
     created_at: datetime | None = Field(None, description="作成日時")
