@@ -33,11 +33,34 @@ This document captures rules, best practices, and insights discovered during dev
 
 ## Project: hatena-blog-mcp-server
 
-### Session Date: 2025-07-30
+### Session Date: 2025-08-08
 
 #### Rules Added Post-Development Start
 
-##### 1. Branch Strategy & Version Control Rules
+##### 1. Markdown Importer Should Be Decoupled From Core CRUD
+**Added to**: `.kiro/specs/hatena-blog-mcp-server/{requirements.md, design.md, tasks.md}`
+**Reason**: Users author in Markdown; API requires HTML/AtomPub. Decoupling keeps services testable and reusable.
+**Rule Added**:
+- Keep service layer HTML-first; add a separate `MarkdownImporter` to map Front Matter and convert Markdown→HTML
+- Provide `create_post_from_markdown(path)` as a thin integration layer; failures return DATA_ERROR with details
+- Document libraries early (`markdown`, `python-frontmatter`) and add tests for edge cases (no title, invalid front matter)
+
+##### 2. Configuration Loader Must Not Auto-Load `.env` In Tests
+**Added to**: `.kiro/steering/tech.md`, `hatena_blog_mcp/config.py`
+**Reason**: `.env` leakage broke tests and masked missing-field errors.
+**Rule Added**:
+- Default: do not auto-load `.env` in code paths used by tests; allow explicit `_env_file` control
+- Test cases use environment patching to inject values deterministically
+
+##### 3. Rate Limiter Error Contract Consistency
+**Issue**: `retry_after` expected int, code provided float; and backoff multiplier handling affected expectations
+**Learning**: Align model types and backoff math with tests/specs
+**Action for Next Project**: Define numeric types precisely in models; document backoff behavior and headers precedence
+
+##### 4. Mocking httpx Responses Carefully
+**Issue**: Tests mocking `httpx.Response` must ensure `status_code` is an int; some code paths compared directly and failed when a Mock slipped through.
+**Learning**: When comparing status codes, guard against non-int or use `int(status_code)`; or ensure test doubles set correct spec/attributes.
+**Action**: Prefer `Mock(spec=httpx.Response)` with `status_code=int` and avoid nested Mock for `response` inside `HTTPStatusError` where direct comparison occurs.
 **Added to**: `.kiro/steering/tech.md`
 **Reason**: No explicit branch strategy was defined initially, causing uncertainty about workflow
 **Rule Added**:

@@ -46,6 +46,13 @@
   - 各操作のユニットテストとモックAPI応答テストの作成
   - _Requirements: REQ-3.1, REQ-3.2, REQ-3.3, REQ-3.5, REQ-4.1, REQ-4.2, REQ-4.3, REQ-4.6, REQ-5.1, REQ-5.2, REQ-5.3, REQ-5.5_
 
+  - 追加（Markdown取り込み拡張）
+    - `MarkdownImporter` ユーティリティの設計・実装（Front Matter解析 + Markdown→HTML変換）
+    - `create_post_from_markdown(path: str)` 高レベルヘルパー（サービス層経由）
+    - 失敗時のデータエラー整形（失敗理由・位置情報などを details に格納）
+    - ユニットテスト：Front Matter 有/無、title の自動補完（H1/ファイル名）、draft/categories/tags のマッピング
+    - _Requirements: REQ-3（拡張7-10）_
+
 ### **Phase 3: MCPサーバー統合**
 
 - [ ] **6. MCPサーバーコアの実装**
@@ -62,6 +69,11 @@
   - `list_blog_posts`ツール：記事一覧取得機能
   - 各ツールのパラメータバリデーションとレスポンス形式の統一
   - _Requirements: REQ-3.1, REQ-3.4, REQ-4.1, REQ-4.4, REQ-5.1, REQ-5.4_
+
+  - 追加（Markdown取り込み拡張）
+    - `create_blog_post_from_markdown` ツール（path: str）
+    - エラーハンドリング：変換失敗時はDATA_ERROR返却
+    - 統合テスト：Markdownファイル→ツール→投稿までのE2E（APIはモック）
 
 ### **Phase 4: エラーハンドリングとログ機能**
 
@@ -150,7 +162,7 @@
 
 ## 🚀 Next Steps for Implementation
 
-### ✅ 完了済み実装状況（2025-08-06 更新）
+### ✅ 完了済み実装状況（2025-08-14 更新）
 
 #### **✅ タスク1: プロジェクト基盤セットアップ** - **完了**
 - ✅ リモートリポジトリのクローンと初期化
@@ -173,36 +185,74 @@
 - ✅ データモデル（AuthConfig, BlogConfig, ErrorInfo等）実装
 - ✅ 包括的テストスイート（53テストケース）作成
 
-### 🔄 次回開発セッション手順
+#### **✅ タスク4: はてなブログAPI通信基盤の実装** - **完了**
+- ✅ HTTPクライアント（httpx）とWSSE認証の統合実装
+- ✅ AtomPub XMLパーシング・生成機能（lxml使用）
+- ✅ ネットワークエラー処理と自動リトライ機能
+- ✅ API制限対応とレート制限機能（RateLimiter）
+- ✅ 統合テスト作成（エンドツーエンドテスト含む）
+- ✅ セキュリティ強化（GitGuardian対応、ハードコードパスワード削除）
+- ✅ レートリミッター堅牢化（モック互換、バックオフ更新順序の調整）
+- ✅ HTTPクライアントのエラーハンドリング洗練（再試行・ログ）
 
-#### **Step 1: mainブランチ同期とブランチ作成**（AI支援）
+#### **✅ タスク5: ブログサービス層の実装** - **完了**
+- ✅ `BlogPostService` の基本CRUD（create/update/get/list/delete）
+- ✅ AtomPub XML との橋渡し実装（`AtomPubProcessor` 利用）
+- ✅ ユニットテスト整備（モックHTTP応答）
+
+### 🔄 次回開発セッション手順（最新）
+
+#### **Step 1: mainブランチ同期とブランチ作成**
 ```bash
 cd hatena-mcp-server
 git checkout main
-git pull origin main  # PR#4マージ後の最新状態を取得
-git checkout -b feature/api-communication
+git pull origin main
+git checkout -b feature/markdown-importer-and-tools
 ```
 
-#### **Step 2: はてなブログAPI通信基盤の実装**（AI支援）
-**タスク4: はてなブログAPI通信基盤の実装**
-- HTTPクライアント（httpx）の実装
-- AtomPub XMLパーシング・生成機能（lxml使用）
-- ネットワークエラー処理と自動リトライ機能
-- API制限対応とレート制限機能
-- API通信基盤のテスト作成
+#### **Step 2: 依存追加（Markdown + Front Matter）**
+```bash
+uv add markdown python-frontmatter
+```
 
-### 📋 次回実装タスクの優先度
+#### **Step 3: Markdown Importer 実装**
+- `src/hatena_blog_mcp/markdown_importer.py` を新規作成
+- `load_from_file(path)` / `convert(markdown_text, filename?)` を実装
+- Front Matter の `title/summary/categories/tags/draft` を `BlogPost` にマッピング
+- Markdown→HTML 変換（`markdown`）
 
-#### 🔥 **高優先度** - API通信基盤（タスク4）
-1. **HTTPクライアント実装**: httpx + WSSE認証統合
-2. **AtomPub XML処理**: lxmlでのパーシング・生成
-3. **エラーハンドリング**: ネットワーク・API制限対応
-4. **基本テスト**: モック環境での動作確認
+#### **Step 4: サービス層との結合**
+- `BlogPostService` に `create_post_from_markdown(path: str)` ヘルパー追加
+- 変換失敗時は DATA_ERROR を返すユーティリティを用意
 
-#### 🎯 **中優先度** - ブログサービス層（タスク5）
-5. **BlogPostService実装**: CRUD操作（create, update, get, list）
-6. **統合テスト**: 実際のAPI通信テスト
-7. **MCPツール統合**: サービス層とMCPツールの結合
+#### **Step 5: ツール追加**
+- `server.py` に `create_blog_post_from_markdown(path: str)` ツールを追加
+- 既存ツール群（create/update/get/list）公開の下準備（未実装なら TODO）
+
+#### **Step 6: テスト**
+- ユニット: `tests/unit/test_markdown_importer.py`（Front Matter 有/無、タイトル補完、ドラフト/カテゴリ）
+- 統合: Markdown→ツール→投稿（HTTPはモック）
+- 実行: `uv run pytest -q`
+
+#### **Step 7: コミット/PR**
+```bash
+git add -A
+git commit -m "Add Markdown Importer and tool integration"
+git push -u origin feature/markdown-importer-and-tools
+# PR作成（GitHub CLI 使用可）
+```
+
+### 📋 次回実装タスクの優先度（更新）
+
+#### 🔥 **高優先度**
+1. Markdown Importer 実装（Front Matter 解析 + Markdown→HTML）
+2. `create_post_from_markdown`（サービス層ヘルパー）
+3. `create_blog_post_from_markdown`（MCPツール）
+4. テスト整備（ユニット/統合）と依存追加
+
+#### 🎯 **中優先度**
+5. 既存MCPツール群の公開（create/update/get/list）
+6. エラーハンドリングの整備（DATA_ERROR 詳細）
 
 ### 🛠️ 技術仕様参考
 
@@ -225,16 +275,31 @@ git checkout -b feature/api-communication
 **✅ 完了済み**:
 - タスク1: プロジェクト基盤セットアップ
 - タスク3: 認証マネージャーの実装  
+- タスク4: はてなブログAPI通信基盤の実装
 - タスク6: MCPサーバーコア
 
 **🔄 次回実装予定**:
-- **タスク4**: はてなブログAPI通信基盤の実装
-- **タスク5**: ブログサービス層の実装
 - **タスク7**: MCPツール実装
+- **タスク9-12**: テスト・統合・ドキュメント
 
 **次回の開始コマンド**:
 ```bash
 cd hatena-mcp-server
 git checkout main && git pull origin main
-git checkout -b feature/api-communication
+git checkout -b feature/markdown-importer-and-tools
+uv add markdown python-frontmatter
 ```
+
+### 🎯 本日の成果（2025-08-14）
+
+#### **テストグリーン化**: 全125テスト通過
+- レートリミッターの挙動を仕様・テスト期待に整合
+- `ConfigManager` の `.env` 読み込みを明示指定時のみマージへ変更（テスト汚染防止）
+- `XML Processor` のコンパクト出力とエラー情報の堅牢化
+- `pyproject.toml` で `lxml<6` に固定（互換性確保）
+
+#### **サービス層**:
+- `BlogPostService` CRUD 実装とユニットテスト整備
+
+#### **次の一手**:
+- Markdown Importer と MCPツール群の追加実装（Step 2-6 に従う）

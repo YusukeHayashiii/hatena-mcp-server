@@ -42,6 +42,7 @@ graph TB
     B --> J[Logger]
     I --> K[Log Storage]
     J --> K
+    C --> L[Markdown Importer]
 ```
 
 ### Technology Stack
@@ -50,10 +51,11 @@ graph TB
 - **Core Framework**: Python 3.12 + uv パッケージマネージャー
 - **MCP Protocol**: `mcp` (Anthropic公式SDK)
 - **HTTP Client**: `httpx` (非同期対応、AtomPub API通信)
-- **XML Processing**: `lxml` (AtomPub XMLパース・生成)
+- **XML Processing**: `lxml` (AtomPub XMLパース・生成、互換性のため `<6` を使用)
 - **Configuration**: `pydantic-settings` (型安全な設定管理)
 - **Logging**: `loguru` (構造化ログ出力)
 - **Testing**: `pytest` + `pytest-asyncio` (非同期テスト対応)
+ - **Markdown**: `markdown`（HTML変換） + `python-frontmatter`（YAML Front Matter 解析）
 
 ### Architecture Decision Rationale
 主要技術選定の根拠：
@@ -155,6 +157,19 @@ class BlogPostService:
         """記事一覧取得"""
 ```
 
+#### Markdown Importer
+```python
+class MarkdownImporter:
+    def __init__(self, *, enable_front_matter: bool = True) -> None:
+        """Markdown取り込みとFront Matter解析"""
+
+    def load_from_file(self, path: str) -> BlogPost:
+        """.mdファイルからBlogPostを構築（contentはHTML）"""
+
+    def convert(self, markdown_text: str, *, filename: str | None = None) -> BlogPost:
+        """Markdownテキスト + 任意のファイル名からBlogPostを構築"""
+```
+
 ### MCP Tools Interface
 MCPクライアントに公開されるツール：
 
@@ -164,6 +179,11 @@ MCPクライアントに公開されるツール：
 | update_blog_post | 記事更新 | post_id: str, title: str, content: str | post_url: str, updated_at: str |
 | get_blog_post | 記事取得 | post_id: str | title: str, content: str, categories: list[str] |
 | list_blog_posts | 記事一覧取得 | limit: int | posts: list[BlogPost] |
+
+#### Optional Tools (Markdown)
+| Tool Name | Purpose | Parameters | Returns |
+|-----------|---------|------------|---------|
+| create_blog_post_from_markdown | Markdownから新規記事投稿 | path: str | post_url: str, post_id: str, created_at: str |
 
 ## Data Models
 

@@ -38,6 +38,13 @@
 5. WHEN 記事にカテゴリが指定される THEN システムは指定されたカテゴリをブログ記事に適用する SHALL
 6. IF はてなブログAPI制限に達している THEN システムはAPI制限エラーとリトライ推奨時間を返却する SHALL
 
+#### Markdown からの投稿（拡張）
+
+7. WHEN MCP クライアントがMarkdownファイル（.md）を指定する THEN システムはMarkdown本文をHTMLに変換し記事として投稿する SHALL
+8. WHEN YAML Front Matter が含まれる THEN システムは title/summary/categories/tags/draft を適切に `BlogPost` にマッピングする SHALL
+9. IF Front Matter に title が無ければ THEN システムは本文先頭の見出し（H1）またはファイル名をタイトルとして使用する SHOULD
+10. IF Markdown が不正または変換に失敗する THEN システムはデータエラー（DETAIL に失敗理由）を返却する SHALL
+
 ### Requirement 4: 記事更新機能
 **User Story:** As an AI assistant, I want to update existing blog posts, so that I can modify published content on hatena blog
 
@@ -71,6 +78,7 @@
 3. WHEN ネットワーク接続エラーが発生する THEN システムは自動リトライ機能（最大3回、指数バックオフ）を実行する SHALL
 4. WHERE デバッグモードにおいて THE SYSTEM SHALL リクエスト・レスポンスの詳細ログを出力する SHALL
 5. IF 設定ファイルの読み込みに失敗する THEN システムは設定エラーの詳細と解決方法を表示する SHALL
+6. WHEN レート制限に達した場合 THEN システムは `retry_after`（秒）を含む構造化エラー情報を返す SHALL
 
 ### Requirement 7: 技術仕様・パフォーマンス
 **User Story:** As a system integrator, I want the MCP server to meet specific technical requirements, so that it can be reliably deployed and maintained
@@ -81,3 +89,4 @@
 2. WHEN サーバーが起動される THEN システムは10秒以内に初期化を完了し、MCPクライアント接続を受け入れる SHALL
 3. IF 同時API呼び出し制限がある THEN システムははてなブログAPIの制限に準拠し、適切なレート制限を実装する SHALL
 4. WHERE 依存関係管理において THE SYSTEM SHALL uvを使用してPython依存関係を管理し、再現可能な環境構築を可能にする SHALL
+5. WHERE 依存制約において THE SYSTEM SHALL lxml<6 を用いて互換性問題を回避する SHOULD

@@ -315,6 +315,14 @@ class AtomPubProcessor:
             encoding=encoding,
             xml_declaration=True
         )
+        # compact指定時、宣言以降の改行を除去して厳密にコンパクト化
+        if not pretty_print:
+            xml_str = xml_bytes.decode(encoding)
+            header, sep, rest = xml_str.partition('?>')
+            if sep:
+                rest = rest.replace('\n', '')
+                return header + sep + rest
+            return xml_str
         return xml_bytes.decode(encoding)
 
     def validate_xml(self, xml_content: Union[str, bytes, etree._Element]) -> bool:
@@ -358,8 +366,18 @@ class AtomPubProcessor:
         """
         details = {}
         if original_error:
-            details["original_error"] = str(original_error)
-            details["error_type"] = type(original_error).__name__
+            # lxml の XMLSyntaxError は複雑だが、テストではインスタンス化時のTypeErrorが出ることがある
+            # ここでは与えられたオブジェクトを安全に文字列化し、型名を格納する
+            try:
+                msg = getattr(original_error, 'msg', None)
+            except Exception:
+                msg = None
+            try:
+                details["original_error"] = (msg if isinstance(msg, str) and msg else str(original_error))
+                details["error_type"] = type(original_error).__name__
+            except Exception:
+                details["original_error"] = ""
+                details["error_type"] = original_error.__class__.__name__
 
         return ErrorInfo(
             error_type=ErrorType.DATA_ERROR,

@@ -26,6 +26,19 @@ This framework is designed for development teams who want to:
 - **Cultural Emphasis**: Focuses on psychological safety and human-centered development practices
 - **Flexibility**: Optional steering phase allows adaptation to different project needs
 
+## Project Addendum: Hatena Blog MCP Server
+
+To support real-world authoring workflows, this project now targets a concrete use case: an MCP server that posts to Hatena Blog via AtomPub. A new Markdown-first authoring flow has been aligned across requirements, design, and tasks.
+
+- User value: Author in Markdown locally, publish via MCP with correct categories/draft/state
+- Approach: Keep blog posting core HTML-based, add a Markdown Importer that converts Markdown (+ YAML Front Matter) into a `BlogPost` domain entity and HTML content
+- Safety: Importer is optional and decoupled; service layer remains stable for other content sources
+
+This addendum is reflected in:
+- `.kiro/specs/hatena-blog-mcp-server/requirements.md`: Markdown投稿の受け入れ基準（Front Matter マッピング、失敗時エラー）
+- `.kiro/specs/hatena-blog-mcp-server/design.md`: `Markdown Importer` コンポーネントと Optional MCP Tool 追加
+- `.kiro/specs/hatena-blog-mcp-server/tasks.md`: Importer 実装・ツール・テストのサブタスク
+
 ## Development Philosophy
 The framework emphasizes:
 1. Human approval at each development phase
