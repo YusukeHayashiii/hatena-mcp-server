@@ -29,13 +29,20 @@ Based on the CLAUDE.md specification:
 - `/kiro:spec-status [feature]` - Check current progress and phases
 
 ## Environment Variables
-No specific environment variables are currently defined for this project.
+For the Hatena Blog MCP Server use case, define the following (managed via `.env`):
+
+- `HATENA_USERNAME`: Hatena account user ID
+- `HATENA_BLOG_ID`: Target blog ID
+- `HATENA_API_KEY`: AtomPub API key
+
+Note: Tests should not depend on real `.env`. The configuration loader must allow disabling default `.env` auto-loading to avoid test contamination.
 
 ## Port Configuration
 Not applicable - this is a documentation framework, no services run on ports.
 
 ## Document Structure Technology
 - **Markdown Processing**: Standard markdown with image support
+- **Markdown Importer**: `markdown` (HTML conversion), `python-frontmatter` (YAML Front Matter parsing)
 - **File References**: `@filename` syntax for document referencing
 - **Multilingual Support**: Japanese content with English workflow instructions
 - **Image Management**: PNG image storage in `share/img/` directory

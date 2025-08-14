@@ -21,8 +21,7 @@ class HatenaBlogSettings(BaseSettings):
 
     # 設定ファイル
     model_config = SettingsConfigDict(
-        env_file='.env',
-        env_file_encoding='utf-8',
+        # .env も環境変数も許可するが、テストのため大小区別なし
         case_sensitive=False,
         extra='ignore'
     )
@@ -38,6 +37,7 @@ class ConfigManager:
         Args:
             config_path: 設定ファイルのパス（省略時は.envを使用）
         """
+        self._use_file = config_path is not None
         self.config_path = config_path or Path(".env")
         self._settings: HatenaBlogSettings | None = None
 
@@ -52,12 +52,22 @@ class ConfigManager:
             ValueError: 設定読み込みに失敗した場合
         """
         try:
-            if self.config_path.exists():
-                # 設定ファイルが存在する場合は通常通り読み込み
-                self._settings = HatenaBlogSettings()
-            else:
-                # 設定ファイルが存在しない場合は環境変数のみ
-                self._settings = HatenaBlogSettings()
+            # まずは環境変数から読み込み（_env_file=Noneを明示）
+            self._settings = HatenaBlogSettings(_env_file=None)
+
+            # 明示的にファイルパスが指定された場合のみ、.env をマージ（環境変数が優先）
+            if self._use_file and self.config_path.exists():
+                file_settings = HatenaBlogSettings(
+                    _env_file=str(self.config_path),
+                    _env_file_encoding='utf-8'
+                )
+                # 空文字は上書きしないように条件付きで統合
+                if file_settings.hatena_username:
+                    self._settings.hatena_username = file_settings.hatena_username
+                if file_settings.hatena_blog_id:
+                    self._settings.hatena_blog_id = file_settings.hatena_blog_id
+                if file_settings.hatena_api_key:
+                    self._settings.hatena_api_key = file_settings.hatena_api_key
 
             return self._settings
         except ValidationError as e:

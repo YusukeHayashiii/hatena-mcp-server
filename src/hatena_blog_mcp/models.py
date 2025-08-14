@@ -71,7 +71,7 @@ class ErrorInfo(BaseModel):
     error_type: ErrorType = Field(..., description="エラータイプ")
     message: str = Field(..., description="エラーメッセージ")
     details: dict[str, Any] | None = Field(None, description="エラー詳細")
-    retry_after: int | None = Field(None, description="リトライ推奨秒数")
+    retry_after: float | None = Field(None, description="リトライ推奨秒数（秒、小数可）")
 
     model_config = {"extra": "forbid"}
 
