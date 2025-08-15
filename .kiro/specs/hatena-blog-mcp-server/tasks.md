@@ -245,28 +245,24 @@ git push -u origin feature/markdown-importer-and-tools
 ### 📋 次回実装タスクの優先度（更新）
 
 #### 🔥 **高優先度**
-1. MCPツール群の本実装と`BlogPostService`への統合
-   - `create_blog_post`/`update_blog_post`/`get_blog_post`/`list_blog_posts`/`create_blog_post_from_markdown`
-   - 非同期呼び出しの整備（イベントループ/実行コンテキスト）
-   - パラメータ検証と戻り値の標準化
-2. エラーハンドリングの詳細化
-   - 変換失敗や検証エラーを`DATA_ERROR`に正規化
-   - 構造化エラー（`ErrorInfo`）のMCPレスポンス反映
-3. 統合テスト（E2E）の追加
-   - Markdownファイル→Importer→Service→MCPツール経由の一連フロー（HTTPはモック）
-4. 設定/DIの導入
-   - サービスファクトリ（環境変数や設定ファイルから`BlogPostService`生成）
-5. README整備（クイックスタート）
-   - セットアップ（`uv sync --extra dev`）、テスト実行、サーバー起動方法
-   - MCP接続手順（`npx -y mcp-remote https://mcp.atlassian.com/v1/sse`）
+1. 非同期実行戦略の改善（イベントループ対応）
+   - `asyncio.run(...)` の置き換え（稼働中ループ検出時の分岐、または `anyio` 等の導入）
+   - FastMCP 実行環境での互換性検証とテスト追加
+2. エラーハンドリングの拡充
+   - API制限時のリトライヒント（`retry_after`）と再試行ポリシーのガイド出力
+   - MCPツールの出力整形（`ErrorInfo` をわかりやすく要約）
+3. README拡充（クイックスタート/接続手順）
+   - セットアップ（`uv sync --extra dev`）、テスト、サーバー起動
+   - MCP接続手順（`npx -y mcp-remote https://mcp.atlassian.com/v1/sse`）と利用例
+4. CI品質ゲートの強化
+   - `ruff`/`mypy`/カバレッジ閾値のCI導入、バッジ追加
 
 #### 🎯 **中優先度**
-6. タイトル抽出の強化（Setext形式H1の検出を追加）
-7. 観測性と品質ゲート
-   - ログ整備、CIでの`ruff`/`mypy`/カバレッジ閾値の確認
+5. タイトル抽出の強化（Setext形式H1の検出を追加）
+6. ログ/観測性の整備（構造化ログ、必要に応じてサンプリング）
 
 #### ⏳ 保留（将来）
-8. `tags` サポートの検討（要件決定後にモデル/Importer/テスト拡張）
+7. `tags` サポートの検討（要件決定後にモデル/Importer/テスト拡張）
 
 ### 🛠️ 技術仕様参考
 
