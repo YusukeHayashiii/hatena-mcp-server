@@ -7,10 +7,9 @@ Features:
 - YAML Front Matter parsing for metadata
 - Markdown to HTML conversion
 - Automatic title extraction from H1 or filename
-- Support for categories, tags, draft status
+- Support for categories and draft status
 """
 
-import os
 from pathlib import Path
 from typing import Optional, Union, Dict, Any
 from datetime import datetime
@@ -18,7 +17,7 @@ from datetime import datetime
 import markdown
 import frontmatter
 
-from .models import BlogPost, ErrorInfo, ErrorType
+from .models import BlogPost
 
 
 class MarkdownImporter:
@@ -28,7 +27,6 @@ class MarkdownImporter:
     - title: Article title (string)
     - summary: Article summary/description (string) 
     - categories: List of category names (list of strings)
-    - tags: List of tag names (list of strings)
     - draft: Draft status (boolean, default: False)
     """
     
@@ -101,6 +99,7 @@ class MarkdownImporter:
                 content = markdown_text
             
             # Convert Markdown to HTML
+            self.markdown_processor.reset()
             html_content = self.markdown_processor.convert(content)
             
             # Extract title

@@ -303,3 +303,15 @@ uv add markdown python-frontmatter
 
 #### **次の一手**:
 - Markdown Importer と MCPツール群の追加実装（Step 2-6 に従う）
+
+---
+
+## 変更履歴（2025-08-15 反映）
+
+- fix: `MarkdownImporter.convert()` 実行前に `markdown_processor.reset()` を呼び出し、拡張の内部状態リーク（特に `toc`）を防止
+- docs: `tags` は一旦未対応として統一（実装・モデル・テストから除外）
+- docs: `README.md` を暫定作成（空）。`pyproject.toml` の `readme` 参照によるビルド失敗の回避
+
+影響範囲:
+- `src/hatena_blog_mcp/markdown_importer.py`: 未使用インポート削除、ドキュメントから`tags`記載を削除、`reset()` 追加
+- 既存テストは全てグリーン（`uv run pytest -q` にて 140 passed）
