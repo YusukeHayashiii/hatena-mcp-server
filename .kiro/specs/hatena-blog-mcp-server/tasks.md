@@ -245,14 +245,28 @@ git push -u origin feature/markdown-importer-and-tools
 ### 📋 次回実装タスクの優先度（更新）
 
 #### 🔥 **高優先度**
-1. Markdown Importer 実装（Front Matter 解析 + Markdown→HTML）
-2. `create_post_from_markdown`（サービス層ヘルパー）
-3. `create_blog_post_from_markdown`（MCPツール）
-4. テスト整備（ユニット/統合）と依存追加
+1. MCPツール群の本実装と`BlogPostService`への統合
+   - `create_blog_post`/`update_blog_post`/`get_blog_post`/`list_blog_posts`/`create_blog_post_from_markdown`
+   - 非同期呼び出しの整備（イベントループ/実行コンテキスト）
+   - パラメータ検証と戻り値の標準化
+2. エラーハンドリングの詳細化
+   - 変換失敗や検証エラーを`DATA_ERROR`に正規化
+   - 構造化エラー（`ErrorInfo`）のMCPレスポンス反映
+3. 統合テスト（E2E）の追加
+   - Markdownファイル→Importer→Service→MCPツール経由の一連フロー（HTTPはモック）
+4. 設定/DIの導入
+   - サービスファクトリ（環境変数や設定ファイルから`BlogPostService`生成）
+5. README整備（クイックスタート）
+   - セットアップ（`uv sync --extra dev`）、テスト実行、サーバー起動方法
+   - MCP接続手順（`npx -y mcp-remote https://mcp.atlassian.com/v1/sse`）
 
 #### 🎯 **中優先度**
-5. 既存MCPツール群の公開（create/update/get/list）
-6. エラーハンドリングの整備（DATA_ERROR 詳細）
+6. タイトル抽出の強化（Setext形式H1の検出を追加）
+7. 観測性と品質ゲート
+   - ログ整備、CIでの`ruff`/`mypy`/カバレッジ閾値の確認
+
+#### ⏳ 保留（将来）
+8. `tags` サポートの検討（要件決定後にモデル/Importer/テスト拡張）
 
 ### 🛠️ 技術仕様参考
 
@@ -303,3 +317,15 @@ uv add markdown python-frontmatter
 
 #### **次の一手**:
 - Markdown Importer と MCPツール群の追加実装（Step 2-6 に従う）
+
+---
+
+## 変更履歴（2025-08-15 反映）
+
+- fix: `MarkdownImporter.convert()` 実行前に `markdown_processor.reset()` を呼び出し、拡張の内部状態リーク（特に `toc`）を防止
+- docs: `tags` は一旦未対応として統一（実装・モデル・テストから除外）
+- docs: `README.md` を暫定作成（空）。`pyproject.toml` の `readme` 参照によるビルド失敗の回避
+
+影響範囲:
+- `src/hatena_blog_mcp/markdown_importer.py`: 未使用インポート削除、ドキュメントから`tags`記載を削除、`reset()` 追加
+- 既存テストは全てグリーン（`uv run pytest -q` にて 140 passed）

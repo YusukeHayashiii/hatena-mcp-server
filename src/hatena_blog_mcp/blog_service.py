@@ -147,3 +147,41 @@ class BlogPostService:
         path = f"/entry/{post_id}"
         response = await self.client.delete(path)
         return response.status_code in (200, 202, 204)
+
+    async def create_post_from_markdown(self, markdown_path: str) -> BlogPost:
+        """Markdownファイルから記事を作成します。
+        
+        Args:
+            markdown_path: Markdownファイルのパス
+            
+        Returns:
+            作成された記事のBlogPostオブジェクト
+            
+        Raises:
+            FileNotFoundError: ファイルが見つからない場合
+            ValueError: Markdown変換に失敗した場合
+            httpx.HTTPError: API通信エラー
+        """
+        from .markdown_importer import MarkdownImporter
+        
+        try:
+            # Markdownファイルを読み込みBlogPostに変換
+            importer = MarkdownImporter(enable_front_matter=True)
+            blog_post = importer.load_from_file(markdown_path)
+            
+            # はてなブログに投稿
+            return await self.create_post(
+                title=blog_post.title,
+                content=blog_post.content,
+                categories=blog_post.categories,
+                summary=blog_post.summary,
+                draft=blog_post.draft,
+                author=blog_post.author,
+            )
+            
+        except (FileNotFoundError, ValueError) as e:
+            # ファイル読み込みやMarkdown変換エラーをDATA_ERRORとして再raise
+            raise ValueError(f"Markdown processing failed: {e}")
+        except Exception as e:
+            # その他のエラーは元の例外をそのまま再raise
+            raise
