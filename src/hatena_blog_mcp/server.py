@@ -2,6 +2,7 @@
 Hatena Blog MCP Server using FastMCP for simplified implementation.
 """
 
+import asyncio
 import logging
 from typing import Annotated
 
@@ -40,25 +41,35 @@ def create_blog_post(
 ) -> str:
     """はてなブログに新しい記事を投稿します"""
     
-    logger.info(f"Creating blog post: {title}")
+    from .error_handler import handle_mcp_errors, validate_required_params
     
-    try:
-        # TODO: 実際のBlogPostServiceとの統合
-        # service = get_blog_service()
-        # result = await service.create_post(
-        #     title=title, 
-        #     content=content, 
-        #     categories=categories or [],
-        #     summary=summary,
-        #     draft=draft
-        # )
-        # return f"記事を投稿しました: {result.url}"
+    @handle_mcp_errors
+    def _create_blog_post():
+        logger.info(f"Creating blog post: {title}")
         
-        return f"記事投稿予定: {title} (実装予定)"
+        # パラメータ検証
+        params = {"title": title, "content": content}
+        validation_error = validate_required_params(params, ["title", "content"])
+        if validation_error:
+            raise ValueError(validation_error)
         
-    except Exception as e:
-        logger.error(f"Error creating blog post: {e}")
-        return f"記事投稿でエラーが発生しました: {str(e)}"
+        # サービス層との統合
+        from .service_factory import get_blog_service
+        
+        service = get_blog_service()
+        
+        # asyncio.run を使って非同期処理を実行
+        result = asyncio.run(service.create_post(
+            title=title, 
+            content=content, 
+            categories=categories or [],
+            summary=summary,
+            draft=draft
+        ))
+        
+        return f"✅ 記事を投稿しました!\n📄 タイトル: {result.title}\n🔗 URL: {result.post_url}\n🆔 記事ID: {result.id}\n📅 投稿日時: {result.created_at}"
+    
+    return _create_blog_post()
 
 
 @mcp.tool()
@@ -70,92 +81,164 @@ def update_blog_post(
     summary: Annotated[str, "新しい要約"] = None,
     draft: Annotated[bool, "下書き状態"] = None,
 ) -> str:
-    """既存の記事を更新します"""
+    """既存のブログ記事を更新します"""
     
-    logger.info(f"Updating blog post: {post_id}")
+    from .error_handler import handle_mcp_errors, validate_required_params
     
-    try:
-        # TODO: 実際のBlogPostServiceとの統合
-        # service = get_blog_service()
-        # result = await service.update_post(
-        #     post_id=post_id,
-        #     title=title,
-        #     content=content,
-        #     categories=categories,
-        #     summary=summary,
-        #     draft=draft
-        # )
-        # return f"記事を更新しました: {result.url}"
+    @handle_mcp_errors
+    def _update_blog_post():
+        logger.info(f"Updating blog post: {post_id}")
         
-        return f"記事更新予定: {post_id} (実装予定)"
+        # パラメータ検証
+        params = {"post_id": post_id}
+        validation_error = validate_required_params(params, ["post_id"])
+        if validation_error:
+            raise ValueError(validation_error)
         
-    except Exception as e:
-        logger.error(f"Error updating blog post: {e}")
-        return f"記事更新でエラーが発生しました: {str(e)}"
+        # 少なくとも1つの更新項目が必要
+        update_fields = [title, content, categories, summary, draft]
+        if all(field is None for field in update_fields):
+            raise ValueError("更新する項目を少なくとも1つ指定してください。")
+        
+        from .service_factory import get_blog_service
+        
+        service = get_blog_service()
+        
+        result = asyncio.run(service.update_post(
+            post_id=post_id,
+            title=title,
+            content=content,
+            categories=categories,
+            summary=summary,
+            draft=draft
+        ))
+        
+        return f"✅ 記事を更新しました!\n📄 タイトル: {result.title}\n🔗 URL: {result.post_url}\n🆔 記事ID: {result.id}\n📅 更新日時: {result.updated_at}"
+    
+    return _update_blog_post()
 
 
 @mcp.tool()
 def get_blog_post(
     post_id: Annotated[str, "取得する記事のID"],
 ) -> str:
-    """記事の詳細情報を取得します"""
+    """指定したIDのブログ記事を取得します"""
     
-    logger.info(f"Getting blog post: {post_id}")
+    from .error_handler import handle_mcp_errors, validate_required_params
     
-    try:
-        # TODO: 実際のBlogPostServiceとの統合
-        # service = get_blog_service()
-        # result = await service.get_post(post_id)
-        # return f"タイトル: {result.title}\nURL: {result.url}\nカテゴリ: {', '.join(result.categories)}"
+    @handle_mcp_errors
+    def _get_blog_post():
+        logger.info(f"Getting blog post: {post_id}")
         
-        return f"記事取得予定: {post_id} (実装予定)"
+        # パラメータ検証
+        params = {"post_id": post_id}
+        validation_error = validate_required_params(params, ["post_id"])
+        if validation_error:
+            raise ValueError(validation_error)
         
-    except Exception as e:
-        logger.error(f"Error getting blog post: {e}")
-        return f"記事取得でエラーが発生しました: {str(e)}"
+        from .service_factory import get_blog_service
+        
+        service = get_blog_service()
+        
+        result = asyncio.run(service.get_post(post_id))
+        
+        # 結果を読みやすい形式で返す
+        categories_str = ", ".join(result.categories) if result.categories else "なし"
+        draft_status = "📝 下書き" if result.draft else "📢 公開済み"
+        
+        content_preview = result.content[:300] + "..." if len(result.content) > 300 else result.content
+        
+        return f"""📄 記事情報:
+🏷️ タイトル: {result.title}
+🆔 記事ID: {result.id}
+🔗 URL: {result.post_url}
+📅 投稿日: {result.created_at}
+📝 更新日: {result.updated_at}
+🏷️ カテゴリ: {categories_str}
+🔄 ステータス: {draft_status}
+
+📖 本文プレビュー:
+{content_preview}"""
+    
+    return _get_blog_post()
 
 
 @mcp.tool()
 def list_blog_posts(
     limit: Annotated[int, "取得する記事数の上限"] = 10,
 ) -> str:
-    """記事一覧を取得します"""
+    """ブログ記事の一覧を取得します"""
     
-    logger.info(f"Listing blog posts (limit: {limit})")
+    from .error_handler import handle_mcp_errors
     
-    try:
-        # TODO: 実際のBlogPostServiceとの統合
-        # service = get_blog_service()
-        # posts = await service.list_posts(limit=limit)
-        # result = "\n".join([f"- {post.title} ({post.url})" for post in posts])
-        # return f"記事一覧:\n{result}"
+    @handle_mcp_errors
+    def _list_blog_posts():
+        logger.info(f"Listing blog posts (limit: {limit})")
         
-        return f"記事一覧取得予定（上限: {limit}件）(実装予定)"
+        # パラメータ検証
+        if limit < 1 or limit > 100:
+            raise ValueError("limitは1以上100以下で指定してください。")
         
-    except Exception as e:
-        logger.error(f"Error listing blog posts: {e}")
-        return f"記事一覧取得でエラーが発生しました: {str(e)}"
+        from .service_factory import get_blog_service
+        
+        service = get_blog_service()
+        
+        results = asyncio.run(service.list_posts(limit=limit))
+        
+        if not results:
+            return "📭 記事が見つかりませんでした。"
+        
+        # 結果を読みやすい形式で返す
+        posts_info = [f"📚 ブログ記事一覧 ({len(results)}件):"]
+        
+        for i, post in enumerate(results, 1):
+            categories_str = ", ".join(post.categories) if post.categories else "なし"
+            draft_status = "📝" if post.draft else "📢"
+            
+            posts_info.append(f"""
+{i}. {draft_status} {post.title}
+   🆔 ID: {post.id}
+   📅 投稿日: {post.created_at}
+   🏷️ カテゴリ: {categories_str}
+   🔗 URL: {post.post_url}""")
+        
+        return '\n'.join(posts_info)
+    
+    return _list_blog_posts()
 
 
 @mcp.tool()
 def create_blog_post_from_markdown(
     path: Annotated[str, "Markdownファイルのパス"],
 ) -> str:
-    """Markdownファイルから記事を作成して投稿します"""
+    """Markdownファイルから新しいブログ記事を投稿します"""
     
-    logger.info(f"Creating blog post from markdown: {path}")
+    from .error_handler import handle_mcp_errors, validate_required_params, validate_file_path
     
-    try:
-        # TODO: 実際のBlogPostServiceとの統合
-        # service = get_blog_service()
-        # result = await service.create_post_from_markdown(path)
-        # return f"Markdownから記事を投稿しました: {result.url}"
+    @handle_mcp_errors
+    def _create_blog_post_from_markdown():
+        logger.info(f"Creating blog post from markdown: {path}")
         
-        return f"Markdownから記事投稿予定: {path} (実装予定)"
+        # パラメータ検証
+        params = {"path": path}
+        validation_error = validate_required_params(params, ["path"])
+        if validation_error:
+            raise ValueError(validation_error)
         
-    except Exception as e:
-        logger.error(f"Error creating blog post from markdown: {e}")
-        return f"Markdown記事投稿でエラーが発生しました: {str(e)}"
+        # ファイルパス検証
+        file_validation_error = validate_file_path(path)
+        if file_validation_error:
+            raise ValueError(file_validation_error)
+        
+        from .service_factory import get_blog_service
+        
+        service = get_blog_service()
+        
+        result = asyncio.run(service.create_post_from_markdown(path))
+        
+        return f"✅ Markdownから記事を投稿しました!\n📄 タイトル: {result.title}\n🔗 URL: {result.post_url}\n🆔 記事ID: {result.id}\n📁 ソースファイル: {path}\n📅 投稿日時: {result.created_at}"
+    
+    return _create_blog_post_from_markdown()
 
 
 def main() -> None:
