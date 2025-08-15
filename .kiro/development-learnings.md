@@ -29,6 +29,38 @@ This document captures rules, best practices, and insights discovered during dev
 **Learning**: Keep development guidelines living document that adapts to tooling improvements
 **Action for Next Project**: Regular review and update of development guidelines
 
+### Session Date: 2025-08-15
+
+#### Implementation Phase Learnings
+
+##### 1. Markdown Importer Integration Pattern
+**Learning**: Markdown processing with Front Matter requires careful state management
+**Issue**: `markdown` processor extensions can leak state between conversions
+**Solution**: Always call `processor.reset()` before each conversion
+**For Next Project**: Document state management patterns for external libraries
+
+##### 2. MCP Tool Implementation Strategy
+**Learning**: Implement core services first, then MCP tool wrappers
+**Success Pattern**: 
+- Core business logic in service layer (`BlogPostService`)
+- Thin MCP tool wrappers that call service methods
+- Consistent error handling across both layers
+**For Next Project**: Establish service-first, tools-second implementation order
+
+##### 3. Test-Driven Development with External APIs
+**Learning**: Mock external API calls early and comprehensively
+**Success Pattern**: 
+- Mock HTTP responses at httpx level
+- Separate unit tests (mocked) from integration tests (real API)
+- Use test fixtures for consistent API response data
+**For Next Project**: Set up API mocking infrastructure before implementation
+
+##### 4. Configuration Management Complexity
+**Learning**: Multiple configuration sources require careful precedence handling
+**Issue**: Environment variable pollution between tests
+**Solution**: Explicit configuration source specification in tests
+**For Next Project**: Design configuration hierarchy upfront and test isolation patterns
+
 ---
 
 ## Project: hatena-blog-mcp-server
