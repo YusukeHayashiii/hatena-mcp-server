@@ -16,7 +16,7 @@ class HatenaBlogSettings(BaseSettings):
 
     # はてなブログ認証情報
     hatena_username: str = ""
-    hatena_blog_id: str = ""
+    hatena_blog_domain: str = ""  # 例: username.hatenablog.com
     hatena_api_key: str = ""
 
     # 設定ファイル
@@ -37,7 +37,6 @@ class ConfigManager:
         Args:
             config_path: 設定ファイルのパス（省略時は.envを使用）
         """
-        self._use_file = config_path is not None
         self.config_path = config_path or Path(".env")
         self._settings: HatenaBlogSettings | None = None
 
@@ -52,22 +51,15 @@ class ConfigManager:
             ValueError: 設定読み込みに失敗した場合
         """
         try:
-            # まずは環境変数から読み込み（_env_file=Noneを明示）
-            self._settings = HatenaBlogSettings(_env_file=None)
-
-            # 明示的にファイルパスが指定された場合のみ、.env をマージ（環境変数が優先）
-            if self._use_file and self.config_path.exists():
-                file_settings = HatenaBlogSettings(
+            # .envファイルが存在する場合は自動で読み込み（環境変数が優先）
+            if self.config_path.exists():
+                self._settings = HatenaBlogSettings(
                     _env_file=str(self.config_path),
                     _env_file_encoding='utf-8'
                 )
-                # 空文字は上書きしないように条件付きで統合
-                if file_settings.hatena_username:
-                    self._settings.hatena_username = file_settings.hatena_username
-                if file_settings.hatena_blog_id:
-                    self._settings.hatena_blog_id = file_settings.hatena_blog_id
-                if file_settings.hatena_api_key:
-                    self._settings.hatena_api_key = file_settings.hatena_api_key
+            else:
+                # .envファイルが存在しない場合は環境変数のみ
+                self._settings = HatenaBlogSettings(_env_file=None)
 
             return self._settings
         except ValidationError as e:
@@ -88,9 +80,9 @@ class ConfigManager:
 
         assert self._settings is not None
 
-        if not self._settings.hatena_username:
+        if not self._settings.hatena_username or self._settings.hatena_username.strip() == "":
             raise ValueError("HATENA_USERNAME が設定されていません")
-        if not self._settings.hatena_api_key:
+        if not self._settings.hatena_api_key or self._settings.hatena_api_key.strip() == "":
             raise ValueError("HATENA_API_KEY が設定されていません")
 
         return AuthConfig(
@@ -113,16 +105,16 @@ class ConfigManager:
 
         assert self._settings is not None
 
-        if not self._settings.hatena_username:
+        if not self._settings.hatena_username or self._settings.hatena_username.strip() == "":
             raise ValueError("HATENA_USERNAME が設定されていません")
-        if not self._settings.hatena_blog_id:
-            raise ValueError("HATENA_BLOG_ID が設定されていません")
-        if not self._settings.hatena_api_key:
+        if not self._settings.hatena_blog_domain or self._settings.hatena_blog_domain.strip() == "":
+            raise ValueError("HATENA_BLOG_DOMAIN が設定されていません")
+        if not self._settings.hatena_api_key or self._settings.hatena_api_key.strip() == "":
             raise ValueError("HATENA_API_KEY が設定されていません")
 
         return BlogConfig(
             username=self._settings.hatena_username,
-            blog_id=self._settings.hatena_blog_id,
+            blog_id=self._settings.hatena_blog_domain,
             api_key=self._settings.hatena_api_key
         )
 
@@ -143,11 +135,11 @@ class ConfigManager:
 
         # 必須項目チェック
         assert self._settings is not None
-        if not self._settings.hatena_username:
+        if not self._settings.hatena_username or self._settings.hatena_username.strip() == "":
             errors.append("HATENA_USERNAME が設定されていません")
-        if not self._settings.hatena_blog_id:
-            errors.append("HATENA_BLOG_ID が設定されていません")
-        if not self._settings.hatena_api_key:
+        if not self._settings.hatena_blog_domain or self._settings.hatena_blog_domain.strip() == "":
+            errors.append("HATENA_BLOG_DOMAIN が設定されていません")
+        if not self._settings.hatena_api_key or self._settings.hatena_api_key.strip() == "":
             errors.append("HATENA_API_KEY が設定されていません")
 
         return len(errors) == 0, errors
@@ -195,8 +187,8 @@ class ConfigManager:
 # はてなユーザーID
 HATENA_USERNAME=your_username_here
 
-# ブログID（ブログのURLから取得: https://your_blog_id.hatenablog.com/）
-HATENA_BLOG_ID=your_blog_id_here
+# ブログドメイン（例: username.hatenablog.com）
+HATENA_BLOG_DOMAIN=your_username.hatenablog.com
 
 # APIキー（はてなブログの設定→詳細設定→AtomPub APIキーから取得）
 HATENA_API_KEY=your_api_key_here

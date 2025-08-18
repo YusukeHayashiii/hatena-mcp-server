@@ -60,6 +60,22 @@ class BlogPostService:
         if not self._client_provided:
             await self._client.close()
 
+    def _extract_numeric_id(self, post_id: str) -> str:
+        """はてなブログの記事IDから数字部分を抽出
+        
+        Args:
+            post_id: tag:blog.hatena.ne.jp,2013:blog-username-xxx-6802418398548165121 形式の記事ID
+            
+        Returns:
+            str: 数字部分のみの記事ID（例: 6802418398548165121）
+        """
+        if post_id.startswith("tag:blog.hatena.ne.jp"):
+            # 最後のハイフン以降の数字部分を抽出
+            return post_id.split("-")[-1]
+        else:
+            # 既に数字形式の場合はそのまま使用
+            return post_id
+
     async def create_post(
         self,
         *,
@@ -68,7 +84,6 @@ class BlogPostService:
         categories: Optional[List[str]] = None,
         author: Optional[str] = None,
         summary: Optional[str] = None,
-        draft: Optional[bool] = None,
     ) -> BlogPost:
         """記事を新規作成します（content は HTML 想定）。
 
@@ -82,7 +97,6 @@ class BlogPostService:
             categories=categories or [],
             author=author,
             summary=summary,
-            draft=draft,
         )
         entry_xml = self.xml.create_entry_xml(blog_post)
         response = await self.client.post("/entry", entry_xml)
@@ -96,7 +110,6 @@ class BlogPostService:
         content: Optional[str] = None,
         categories: Optional[List[str]] = None,
         summary: Optional[str] = None,
-        draft: Optional[bool] = None,
         author: Optional[str] = None,
     ) -> BlogPost:
         """既存記事を更新します（部分更新サポート）。
@@ -115,8 +128,6 @@ class BlogPostService:
             current.categories = categories
         if summary is not None:
             current.summary = summary
-        if draft is not None:
-            current.draft = draft
         if author is not None:
             current.author = author
 
@@ -124,13 +135,15 @@ class BlogPostService:
         entry_xml = self.xml.create_entry_xml(current)
 
         # 4) 更新リクエスト
-        path = f"/entry/{post_id}"
+        numeric_id = self._extract_numeric_id(post_id)
+        path = f"/entry/{numeric_id}"
         response = await self.client.put(path, entry_xml)
         return self.xml.parse_entry_xml(response.text)
 
     async def get_post(self, post_id: str) -> BlogPost:
         """記事IDで記事詳細を取得します。"""
-        path = f"/entry/{post_id}"
+        numeric_id = self._extract_numeric_id(post_id)
+        path = f"/entry/{numeric_id}"
         response = await self.client.get(path)
         return self.xml.parse_entry_xml(response.text)
 
@@ -175,7 +188,6 @@ class BlogPostService:
                 content=blog_post.content,
                 categories=blog_post.categories,
                 summary=blog_post.summary,
-                draft=blog_post.draft,
                 author=blog_post.author,
             )
             

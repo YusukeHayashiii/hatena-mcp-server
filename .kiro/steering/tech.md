@@ -32,7 +32,7 @@ Based on the CLAUDE.md specification:
 For the Hatena Blog MCP Server use case, define the following (managed via `.env`):
 
 - `HATENA_USERNAME`: Hatena account user ID
-- `HATENA_BLOG_ID`: Target blog ID
+- `HATENA_BLOG_DOMAIN`: Blog domain (e.g., `username.hatenablog.com`)
 - `HATENA_API_KEY`: AtomPub API key
 
 Note: Tests should not depend on real `.env`. The configuration loader must allow disabling default `.env` auto-loading to avoid test contamination.

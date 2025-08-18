@@ -20,7 +20,7 @@ class TestHatenaBlogSettings:
         settings = HatenaBlogSettings()
 
         assert settings.hatena_username == ""
-        assert settings.hatena_blog_id == ""
+        assert settings.hatena_blog_domain == ""
         assert settings.hatena_api_key == ""
 
 
@@ -42,7 +42,7 @@ class TestConfigManager:
 
     @patch.dict(os.environ, {
         "HATENA_USERNAME": "test_user",
-        "HATENA_BLOG_ID": "testblog",
+        "HATENA_BLOG_DOMAIN": "testblog",
         "HATENA_API_KEY": "mock_api_key_test"
     })
     def test_load_settings_from_env(self):
@@ -51,12 +51,12 @@ class TestConfigManager:
         settings = config_manager.load_settings()
 
         assert settings.hatena_username == "test_user"
-        assert settings.hatena_blog_id == "testblog"
+        assert settings.hatena_blog_domain == "testblog"
         assert settings.hatena_api_key == "mock_api_key_test"
 
     @patch.dict(os.environ, {
         "HATENA_USERNAME": "fileuser",
-        "HATENA_BLOG_ID": "fileblog",
+        "HATENA_BLOG_DOMAIN": "fileblog",
         "HATENA_API_KEY": "filekey"
     })
     @patch("pathlib.Path.exists")
@@ -68,7 +68,7 @@ class TestConfigManager:
         settings = config_manager.load_settings()
 
         assert settings.hatena_username == "fileuser"
-        assert settings.hatena_blog_id == "fileblog"
+        assert settings.hatena_blog_domain == "fileblog"
         assert settings.hatena_api_key == "filekey"
 
     @patch.dict(os.environ, {
@@ -87,7 +87,8 @@ class TestConfigManager:
     @patch.dict(os.environ, {"HATENA_API_KEY": "mock_api_key_test"})
     def test_get_auth_config_missing_username(self):
         """ユーザー名不足での認証設定取得テスト"""
-        config_manager = ConfigManager()
+        # 存在しない.envファイルパスを指定してテスト環境の干渉を避ける
+        config_manager = ConfigManager(Path("/non/existent/.env"))
 
         with pytest.raises(ValueError, match="HATENA_USERNAME が設定されていません"):
             config_manager.get_auth_config()
@@ -95,14 +96,15 @@ class TestConfigManager:
     @patch.dict(os.environ, {"HATENA_USERNAME": "test_user"})
     def test_get_auth_config_missing_api_key(self):
         """APIキー不足での認証設定取得テスト"""
-        config_manager = ConfigManager()
+        # 存在しない.envファイルパスを指定してテスト環境の干渉を避ける
+        config_manager = ConfigManager(Path("/non/existent/.env"))
 
         with pytest.raises(ValueError, match="HATENA_API_KEY が設定されていません"):
             config_manager.get_auth_config()
 
     @patch.dict(os.environ, {
         "HATENA_USERNAME": "test_user",
-        "HATENA_BLOG_ID": "testblog",
+        "HATENA_BLOG_DOMAIN": "testblog",
         "HATENA_API_KEY": "mock_api_key_test"
     })
     def test_get_blog_config_success(self):
@@ -121,14 +123,15 @@ class TestConfigManager:
     })
     def test_get_blog_config_missing_blog_id(self):
         """ブログID不足でのブログ設定取得テスト"""
-        config_manager = ConfigManager()
+        # 存在しない.envファイルパスを指定してテスト環境の干渉を避ける
+        config_manager = ConfigManager(Path("/non/existent/.env"))
 
-        with pytest.raises(ValueError, match="HATENA_BLOG_ID が設定されていません"):
+        with pytest.raises(ValueError, match="HATENA_BLOG_DOMAIN が設定されていません"):
             config_manager.get_blog_config()
 
     @patch.dict(os.environ, {
         "HATENA_USERNAME": "test_user",
-        "HATENA_BLOG_ID": "testblog",
+        "HATENA_BLOG_DOMAIN": "testblog",
         "HATENA_API_KEY": "mock_api_key_test"
     })
     def test_validate_configuration_success(self):
@@ -142,22 +145,24 @@ class TestConfigManager:
     @patch.dict(os.environ, {"HATENA_USERNAME": "test_user"})
     def test_validate_configuration_missing_fields(self):
         """不完全な設定の検証テスト"""
-        config_manager = ConfigManager()
+        # 存在しない.envファイルパスを指定してテスト環境の干渉を避ける
+        config_manager = ConfigManager(Path("/non/existent/.env"))
         is_valid, errors = config_manager.validate_configuration()
 
         assert is_valid is False
-        assert "HATENA_BLOG_ID が設定されていません" in errors
+        assert "HATENA_BLOG_DOMAIN が設定されていません" in errors
         assert "HATENA_API_KEY が設定されていません" in errors
 
     @patch.dict(os.environ, {}, clear=True)
     def test_validate_configuration_all_missing(self):
         """全ての設定が不足している場合のテスト"""
-        config_manager = ConfigManager()
+        # 存在しない.envファイルパスを指定してテスト環境の干渉を避ける
+        config_manager = ConfigManager(Path("/non/existent/.env"))
         is_valid, errors = config_manager.validate_configuration()
 
         assert is_valid is False
         assert "HATENA_USERNAME が設定されていません" in errors
-        assert "HATENA_BLOG_ID が設定されていません" in errors
+        assert "HATENA_BLOG_DOMAIN が設定されていません" in errors
         assert "HATENA_API_KEY が設定されていません" in errors
 
     def test_create_config_error(self):
@@ -179,7 +184,7 @@ class TestConfigManager:
         template = config_manager.generate_env_template()
 
         assert "HATENA_USERNAME=" in template
-        assert "HATENA_BLOG_ID=" in template
+        assert "HATENA_BLOG_DOMAIN=" in template
         assert "HATENA_API_KEY=" in template
         assert "# Hatena Blog MCP Server Configuration" in template
 

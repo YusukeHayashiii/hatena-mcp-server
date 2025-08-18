@@ -220,6 +220,12 @@ class AtomPubProcessor:
         # リンク情報の解析
         self._parse_links(entry, blog_post, ns)
         
+        # 互換性のためのフィールド設定
+        if blog_post.alternate_url:
+            blog_post.post_url = blog_post.alternate_url
+        if blog_post.published:
+            blog_post.created_at = blog_post.published
+        
         return blog_post
 
     def _parse_links(self, entry: etree._Element, blog_post: BlogPost, ns: Dict[str, str]) -> None:

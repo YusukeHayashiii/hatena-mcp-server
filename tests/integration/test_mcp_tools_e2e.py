@@ -140,9 +140,7 @@ draft: false
             result = create_blog_post(
                 title="テスト記事",
                 content="<p>テスト本文</p>",
-                categories=["テスト"],
-                summary="テスト要約",
-                draft=False
+                categories=["テスト"]
             )
         
         assert "✅ 記事を投稿しました!" in result
@@ -154,9 +152,7 @@ draft: false
         mock_blog_service.create_post.assert_called_once_with(
             title="テスト記事",
             content="<p>テスト本文</p>",
-            categories=["テスト"],
-            summary="テスト要約",
-            draft=False
+            categories=["テスト"]
         )
     
     def test_create_blog_post_missing_title(self):
@@ -188,9 +184,7 @@ draft: false
             post_id="test-id-123",
             title="更新されたテスト記事",
             content="<p>更新されたテスト本文</p>",
-            categories=["更新テスト"],
-            summary=None,
-            draft=None
+            categories=["更新テスト"]
         )
     
     def test_update_blog_post_no_updates(self):

@@ -17,15 +17,15 @@
 
 1. [はてなブログ](https://blog.hatena.ne.jp/)にログイン
 2. ブログ設定 → 詳細設定 → AtomPub から APIキーを取得
-3. ブログのユーザーIDとブログIDを確認
+3. ブログのユーザー名とブログドメイン（例: username.hatenablog.com）を確認
 
 ### 2. 環境設定
 
 プロジェクトルートに `.env` ファイルを作成し、以下の情報を設定してください：
 
 ```bash
-HATENA_USER_ID=your_username
-HATENA_BLOG_ID=your_blog_id
+HATENA_USERNAME=your_username
+HATENA_BLOG_DOMAIN=your_username.hatenablog.com
 HATENA_API_KEY=your_api_key_here
 ```
 
@@ -65,7 +65,7 @@ HATENA_API_KEY=your_api_key_here
 ### MCPサーバーの起動
 
 ```bash
-uv run python -m src.hatena_blog_mcp.server
+uv run src/hatena_blog_mcp/server.py
 ```
 
 ### Claude Code での使用
@@ -83,16 +83,13 @@ uv run python -m src.hatena_blog_mcp.server
 - `title` (必須): 記事のタイトル
 - `content` (必須): 記事の本文（HTML形式）
 - `categories` (任意): カテゴリのリスト
-- `summary` (任意): 記事の要約
-- `draft` (任意): 下書き状態（デフォルト: false）
 
 **使用例:**
 ```python
 create_blog_post(
     title="新しい記事",
     content="<p>記事の本文です。</p>",
-    categories=["技術", "Python"],
-    draft=False
+    categories=["技術", "Python"]
 )
 ```
 
@@ -104,8 +101,6 @@ create_blog_post(
 - `title` (任意): 新しいタイトル
 - `content` (任意): 新しい本文
 - `categories` (任意): 新しいカテゴリ
-- `summary` (任意): 新しい要約
-- `draft` (任意): 下書き状態
 
 ### `get_blog_post`
 指定した記事の詳細情報を取得します。
@@ -130,8 +125,6 @@ Markdownファイルから記事を投稿します。
 ---
 title: 記事のタイトル
 categories: [技術, Python]
-summary: 記事の要約
-draft: false
 ---
 
 # 記事本文
@@ -217,7 +210,7 @@ uv run ruff format src tests
 
 1. `.env` ファイルの設定値を確認
 2. はてなブログの設定画面でAPIキーが有効か確認
-3. ユーザーIDとブログIDが正しいか確認
+3. ユーザー名とブログドメインが正しいか確認
 
 ### ネットワークエラーが発生する場合
 
@@ -229,8 +222,8 @@ uv run ruff format src tests
 
 ```bash
 # テスト用環境変数を設定
-export HATENA_USER_ID=test_user
-export HATENA_BLOG_ID=test_blog  
+export HATENA_USERNAME=test_user
+export HATENA_BLOG_DOMAIN=test_user.hatenablog.com
 export HATENA_API_KEY=test_key
 
 # テスト実行
