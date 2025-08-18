@@ -468,8 +468,8 @@ class ServerConfig(BaseSettings):
 
 ```python
 # .env ファイル例（プレーンテキスト保存）
-HATENA_USER_ID=your_username
-HATENA_BLOG_ID=your_blog_id
+HATENA_USERNAME=your_username
+HATENA_BLOG_DOMAIN=your_username.hatenablog.com
 HATENA_API_KEY=your_api_key_here
 ```
 
@@ -490,8 +490,8 @@ def interactive_setup():
     api_key = input("APIキー: ")
     
     with open('.env', 'w') as f:
-        f.write(f"HATENA_USER_ID={user_id}\n")
-        f.write(f"HATENA_BLOG_ID={blog_id}\n")
+        f.write(f"HATENA_USERNAME={user_id}\n")
+        f.write(f"HATENA_BLOG_DOMAIN={blog_id}.hatenablog.com\n")
         f.write(f"HATENA_API_KEY={api_key}\n")
 ```
 
@@ -544,7 +544,7 @@ python -m hatena_blog_mcp \
 class FlexibleConfig:
     def load_config(self):
         # Priority 1: Environment variables
-        if all([os.getenv('HATENA_USER_ID'), os.getenv('HATENA_BLOG_ID'), os.getenv('HATENA_API_KEY')]):
+        if all([os.getenv('HATENA_USERNAME'), os.getenv('HATENA_BLOG_DOMAIN'), os.getenv('HATENA_API_KEY')]):
             return self._load_from_env()
         
         # Priority 2: .env file
