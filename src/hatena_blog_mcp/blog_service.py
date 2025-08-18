@@ -84,7 +84,6 @@ class BlogPostService:
         categories: Optional[List[str]] = None,
         author: Optional[str] = None,
         summary: Optional[str] = None,
-        draft: Optional[bool] = None,
     ) -> BlogPost:
         """記事を新規作成します（content は HTML 想定）。
 
@@ -98,7 +97,6 @@ class BlogPostService:
             categories=categories or [],
             author=author,
             summary=summary,
-            draft=draft,
         )
         entry_xml = self.xml.create_entry_xml(blog_post)
         response = await self.client.post("/entry", entry_xml)
@@ -112,7 +110,6 @@ class BlogPostService:
         content: Optional[str] = None,
         categories: Optional[List[str]] = None,
         summary: Optional[str] = None,
-        draft: Optional[bool] = None,
         author: Optional[str] = None,
     ) -> BlogPost:
         """既存記事を更新します（部分更新サポート）。
@@ -131,8 +128,6 @@ class BlogPostService:
             current.categories = categories
         if summary is not None:
             current.summary = summary
-        if draft is not None:
-            current.draft = draft
         if author is not None:
             current.author = author
 
@@ -193,7 +188,6 @@ class BlogPostService:
                 content=blog_post.content,
                 categories=blog_post.categories,
                 summary=blog_post.summary,
-                draft=blog_post.draft,
                 author=blog_post.author,
             )
             

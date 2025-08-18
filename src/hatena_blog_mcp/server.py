@@ -63,16 +63,17 @@ def create_blog_post(
     title: Annotated[str, "記事のタイトル"],
     content: Annotated[str, "記事の本文（HTML形式）"],
     categories: Annotated[Optional[list[str]], "記事のカテゴリリスト"] = None,
-    summary: Annotated[Optional[str], "記事の要約"] = None,
-    draft: Annotated[bool, "下書き状態"] = False,
 ) -> str:
     """はてなブログに新しい記事を投稿します"""
+    
+
     
     from hatena_blog_mcp.error_handler import handle_mcp_errors, validate_required_params
     
     @handle_mcp_errors
     def _create_blog_post():
         logger.info(f"Creating blog post: {title}")
+
         
         # パラメータ検証
         params = {"title": title, "content": content}
@@ -89,12 +90,11 @@ def create_blog_post(
         result = run_async_safely(service.create_post(
             title=title, 
             content=content, 
-            categories=categories or [],
-            summary=summary,
-            draft=draft
+            categories=categories or []
         ))
         
-        return f"✅ 記事を投稿しました!\n📄 タイトル: {result.title}\n🔗 URL: {result.post_url}\n🆔 記事ID: {result.id}\n📅 投稿日時: {result.created_at}"
+        draft_status = "📝 下書き" if result.draft else "📢 公開済み"
+        return f"✅ 記事を投稿しました!\n📄 タイトル: {result.title}\n🔗 URL: {result.post_url}\n🆔 記事ID: {result.id}\n📅 投稿日時: {result.created_at}\n🔄 ステータス: {draft_status}"
     
     return _create_blog_post()
 
@@ -105,8 +105,6 @@ def update_blog_post(
     title: Annotated[Optional[str], "新しいタイトル"] = None,
     content: Annotated[Optional[str], "新しい本文（HTML形式）"] = None,
     categories: Annotated[Optional[list[str]], "新しいカテゴリリスト"] = None,
-    summary: Annotated[Optional[str], "新しい要約"] = None,
-    draft: Annotated[Optional[bool], "下書き状態"] = None,
 ) -> str:
     """既存のブログ記事を更新します"""
     
@@ -123,7 +121,7 @@ def update_blog_post(
             raise ValueError(validation_error)
         
         # 少なくとも1つの更新項目が必要
-        update_fields = [title, content, categories, summary, draft]
+        update_fields = [title, content, categories]
         if all(field is None for field in update_fields):
             raise ValueError("更新する項目を少なくとも1つ指定してください。")
         
@@ -135,9 +133,7 @@ def update_blog_post(
             post_id=post_id,
             title=title,
             content=content,
-            categories=categories,
-            summary=summary,
-            draft=draft
+            categories=categories
         ))
         
         return f"✅ 記事を更新しました!\n📄 タイトル: {result.title}\n🔗 URL: {result.post_url}\n🆔 記事ID: {result.id}\n📅 更新日時: {result.updated_at}"
