@@ -112,74 +112,73 @@ class HatenaHttpClient:
         if headers:
             request_headers.update(headers)
 
-        # レート制限を適用
-        await self.rate_limiter.acquire()
-
-        # リトライロジック
-        last_exception = None
-        for attempt in range(self.max_retries + 1):
-            try:
-                logger.debug(
-                    f"HTTPリクエスト実行 (試行 {attempt + 1}/{self.max_retries + 1}): "
-                    f"{method} {url}"
-                )
+        # レート制限を適用（コンテキストマネージャで確実に解放）
+        async with self.rate_limiter.request():
+            # リトライロジック
+            last_exception = None
+            for attempt in range(self.max_retries + 1):
+                try:
+                    logger.debug(
+                        f"HTTPリクエスト実行 (試行 {attempt + 1}/{self.max_retries + 1}): "
+                        f"{method} {url}"
+                    )
+                    
+                    response = await self._client.request(
+                        method=method,
+                        url=url,
+                        content=content,
+                        headers=request_headers,
+                        params=params
+                    )
+                    
+                    # レート制限器にレスポンスを通知
+                    self.rate_limiter.handle_response(response)
+                    
+                    # ステータスコードをチェック
+                    response.raise_for_status()
+                    
+                    logger.debug(f"HTTPレスポンス: {response.status_code}")
+                    
+                    return response
                 
-                response = await self._client.request(
-                    method=method,
-                    url=url,
-                    content=content,
-                    headers=request_headers,
-                    params=params
-                )
+                except httpx.HTTPStatusError as e:
+                    logger.warning(f"HTTPステータスエラー (試行 {attempt + 1}): {e}")
+                    
+                    # レート制限器にレスポンスを通知
+                    self.rate_limiter.handle_response(e.response)
+                    
+                    # 429（レート制限）は特別な処理
+                    if e.response.status_code == 429:
+                        if attempt == self.max_retries:
+                            rate_limit_error = self.rate_limiter.create_rate_limit_error()
+                            raise httpx.HTTPStatusError(
+                                message=rate_limit_error.message,
+                                request=e.request,
+                                response=e.response
+                            )
+                        # まだリトライする場合は続行
+                        last_exception = e
+                    elif e.response.status_code < 500:
+                        # その他の4xx系エラーはリトライしない
+                        raise
+                    else:
+                        last_exception = e
                 
-                # レート制限器にレスポンスを通知
-                self.rate_limiter.handle_response(response)
-                
-                # ステータスコードをチェック
-                response.raise_for_status()
-                
-                logger.debug(f"HTTPレスポンス: {response.status_code}")
-                return response
-
-            except httpx.HTTPStatusError as e:
-                logger.warning(f"HTTPステータスエラー (試行 {attempt + 1}): {e}")
-                
-                # レート制限器にレスポンスを通知
-                self.rate_limiter.handle_response(e.response)
-                
-                # 429（レート制限）は特別な処理
-                if e.response.status_code == 429:
-                    if attempt == self.max_retries:
-                        # 最後の試行の場合はレート制限エラーを作成
-                        rate_limit_error = self.rate_limiter.create_rate_limit_error()
-                        raise httpx.HTTPStatusError(
-                            message=rate_limit_error.message,
-                            request=e.request,
-                            response=e.response
-                        )
-                    # まだリトライする場合は続行
+                except httpx.RequestError as e:
+                    logger.warning(f"HTTPリクエストエラー (試行 {attempt + 1}): {e}")
                     last_exception = e
-                elif e.response.status_code < 500:
-                    # その他の4xx系エラーはリトライしない
-                    raise
-                else:
-                    last_exception = e
-
-            except httpx.RequestError as e:
-                logger.warning(f"HTTPリクエストエラー (試行 {attempt + 1}): {e}")
-                last_exception = e
-
-            # 最後の試行でない場合、指数バックオフで待機
-            if attempt < self.max_retries:
-                wait_time = 2 ** attempt
-                logger.debug(f"リトライ前に {wait_time} 秒待機")
-                await asyncio.sleep(wait_time)
-
-        # すべてのリトライが失敗した場合
-        if last_exception:
-            raise last_exception
-        else:
-            raise httpx.RequestError("予期しないエラーが発生しました")
+                
+                # 最後の試行でない場合、指数バックオフで待機
+                if attempt < self.max_retries:
+                    wait_time = 2 ** attempt
+                    logger.debug(f"リトライ前に {wait_time} 秒待機")
+                    await asyncio.sleep(wait_time)
+            
+            # すべてのリトライが失敗
+            if last_exception:
+                raise last_exception
+            else:
+                raise httpx.RequestError("予期しないエラーが発生しました")
 
     async def get(
         self,

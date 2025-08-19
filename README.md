@@ -1,6 +1,7 @@
 # Hatena Blog MCP Server
 
 はてなブログに記事を投稿・更新するためのMCP（Model Context Protocol）サーバーです。Claude CodeなどのAIアシスタントが、はてなブログと連携して記事管理を行えるようになります。
+個人が趣味で開発しているものですので、ご利用は自己責任でお願いします。
 
 ## 🚀 主な機能
 
@@ -16,7 +17,7 @@
 ### 1. はてなブログAPIキーの取得
 
 1. [はてなブログ](https://blog.hatena.ne.jp/)にログイン
-2. ブログ設定 → 詳細設定 → AtomPub から APIキーを取得
+2. アカウント設定 から APIキーを取得
 3. ブログのユーザー名とブログドメイン（例: username.hatenablog.com）を確認
 
 ### 2. 環境設定
@@ -73,6 +74,50 @@ uv run src/hatena_blog_mcp/server.py
 1. Claude Code で MCP サーバーに接続
 2. 利用可能なツールを確認
 3. ツールを使用してブログ操作を実行
+
+#### Claude Code（VS Code/Claude Desktop）からの利用設定
+
+1) 設定ファイルを作成（または既存に追記）
+- `~/.claude.json` に以下を追加（ユーザースコープで追加する場合）
+
+※　[公式ドキュメント](https://docs.anthropic.com/ja/docs/claude-code/mcp) では`claude add <name> <command> [args...]` と書かれていますが、うまいこと設定できなかったので直接設定しています……
+
+```json
+{
+  "mcpServers": {
+    "hatena-mcp": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/absolute/path/to/hatena-mcp-server",
+        "run",
+        "src/hatena_blog_mcp/server.py"
+      ]
+    }
+  }
+}
+```
+
+- 注意:
+  - `/absolute/path/to/hatena-mcp-server` を実際のプロジェクトパスに置き換えてください
+  - `.env` はプロジェクト直下に配置（`.env` の自動読み込みはリポジトリ直下が前提）
+  - 依存関係は事前に `uv sync`（開発も行う場合は `uv sync --extra dev`）
+
+2) Claude Code を再起動
+- 再起動後、接続に成功すると `hatena-mcp` のツール群が利用可能になります
+
+3) 動作確認
+- ツール一覧に `create_blog_post`, `update_blog_post`, `get_blog_post`, `list_blog_posts`, `create_blog_post_from_markdown` が表示されること
+- 例（一覧取得の依頼）:
+```text
+list_blog_posts(limit=5) を実行してください
+```
+
+1) よくあるエラー
+- ツールが表示されない: `.mcp.json` のパス/スペルミス、`--directory` のパス誤りを確認
+- 認証エラー: `.env` の `HATENA_USERNAME`, `HATENA_BLOG_DOMAIN`, `HATENA_API_KEY` を再確認
+
+- 参考: 設定ファイルの配置場所は公式ドキュメント（[Claude Code 設定ガイド](https://docs.anthropic.com/ja/docs/claude-code/settings)）を参照
 
 ## 🔧 利用可能なMCPツール
 
@@ -239,14 +284,6 @@ uv run pytest -v
 ## 📝 ライセンス
 
 MIT License
-
-## 🤝 コントリビューション
-
-1. このリポジトリをフォーク
-2. フィーチャーブランチを作成 (`git checkout -b feature/amazing-feature`)
-3. 変更をコミット (`git commit -m 'Add amazing feature'`)
-4. ブランチをプッシュ (`git push origin feature/amazing-feature`)
-5. プルリクエストを作成
 
 ## 📧 お問い合わせ
 

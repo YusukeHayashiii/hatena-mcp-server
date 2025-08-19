@@ -3,6 +3,7 @@ MCP ツール用の統一エラーハンドリング
 """
 
 import logging
+import asyncio
 from functools import wraps
 from typing import Callable, Any, Dict, Optional
 
@@ -14,23 +15,36 @@ logger = logging.getLogger(__name__)
 def handle_mcp_errors(func: Callable) -> Callable:
     """
     MCP ツール関数用のデコレータ - 統一されたエラーハンドリングを提供
+    同期/非同期の両方の関数に対応。
     """
-    @wraps(func)
-    def wrapper(*args, **kwargs) -> str:
-        try:
-            result = func(*args, **kwargs)
-            return result
-        except Exception as e:
-            # エラーをログに記録
-            logger.error(f"Error in {func.__name__}: {e}", exc_info=True)
-            
-            # エラータイプを判定
-            error_info = classify_error(e)
-            
-            # ユーザーフレンドリーなエラーメッセージを生成
-            return format_error_message(error_info, func.__name__)
-    
-    return wrapper
+    if asyncio.iscoroutinefunction(func):
+        @wraps(func)
+        async def async_wrapper(*args, **kwargs) -> str:
+            try:
+                result = await func(*args, **kwargs)
+                return result
+            except Exception as e:
+                # エラーをログに記録
+                logger.error(f"Error in {func.__name__}: {e}", exc_info=True)
+                # エラータイプを判定
+                error_info = classify_error(e)
+                # ユーザーフレンドリーなエラーメッセージを生成
+                return format_error_message(error_info, func.__name__)
+        return async_wrapper
+    else:
+        @wraps(func)
+        def sync_wrapper(*args, **kwargs) -> str:
+            try:
+                result = func(*args, **kwargs)
+                return result
+            except Exception as e:
+                # エラーをログに記録
+                logger.error(f"Error in {func.__name__}: {e}", exc_info=True)
+                # エラータイプを判定
+                error_info = classify_error(e)
+                # ユーザーフレンドリーなエラーメッセージを生成
+                return format_error_message(error_info, func.__name__)
+        return sync_wrapper
 
 
 def classify_error(exception: Exception) -> ErrorInfo:
