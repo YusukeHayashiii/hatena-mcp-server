@@ -4,6 +4,7 @@ API制限対応とレート制限機能を提供します。
 """
 
 import asyncio
+from contextlib import asynccontextmanager
 import logging
 import time
 from typing import Any, Dict, Optional
@@ -76,19 +77,31 @@ class RateLimiter:
 
     async def acquire(self) -> None:
         """
-        レート制限を適用してリクエスト実行権を取得します。
-
-        必要に応じて待機時間を挿入し、同時実行数を制限します。
+        レート制限に基づく待機と記録のみを行います。
+        同時実行の制御は `request()` コンテキストマネージャで行います。
         """
-        # 並行リクエスト数の制御とレート制限待機を行い、呼び出し側に即座に制御を返す
+        async with self._lock:
+            await self._wait_for_rate_limit()
+            self._record_request()
+    
+    def release(self) -> None:
+        """セマフォを解放します（`request()` 利用時のみ必要）"""
+        self._semaphore.release()
+
+    @asynccontextmanager
+    async def request(self):
+        """
+        リクエスト1回分の実行権を管理する非同期コンテキストマネージャ。
+        acquire と release を確実に対応させるため、こちらの利用を推奨。
+        """
+        # 同時実行の上限に入る
         await self._semaphore.acquire()
+        # レート制限に基づく待機と記録
+        await self.acquire()
         try:
-            async with self._lock:
-                await self._wait_for_rate_limit()
-                self._record_request()
+            yield
         finally:
-            # 取得直後に解放して、呼び出し側のI/O実行をブロックしない
-            self._semaphore.release()
+            self.release()
 
     def _record_request(self) -> None:
         """リクエストの実行を記録します"""

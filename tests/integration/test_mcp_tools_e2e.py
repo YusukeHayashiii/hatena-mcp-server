@@ -134,10 +134,11 @@ draft: false
         # クリーンアップ
         os.unlink(temp_path)
     
-    def test_create_blog_post_success(self, mock_blog_service):
+    @pytest.mark.asyncio
+    async def test_create_blog_post_success(self, mock_blog_service):
         """記事投稿の正常フロー"""
         with patch('hatena_blog_mcp.service_factory.get_blog_service', return_value=mock_blog_service):
-            result = create_blog_post(
+            result = await create_blog_post(
                 title="テスト記事",
                 content="<p>テスト本文</p>",
                 categories=["テスト"]
@@ -155,9 +156,10 @@ draft: false
             categories=["テスト"]
         )
     
-    def test_create_blog_post_missing_title(self):
+    @pytest.mark.asyncio
+    async def test_create_blog_post_missing_title(self):
         """必須パラメータ不足エラーのテスト"""
-        result = create_blog_post(
+        result = await create_blog_post(
             title="",  # 空のタイトル
             content="<p>テスト本文</p>"
         )
@@ -166,10 +168,11 @@ draft: false
         assert "必須パラメータが不足しています" in result
         assert "title" in result
     
-    def test_update_blog_post_success(self, mock_blog_service):
+    @pytest.mark.asyncio
+    async def test_update_blog_post_success(self, mock_blog_service):
         """記事更新の正常フロー"""
         with patch('hatena_blog_mcp.service_factory.get_blog_service', return_value=mock_blog_service):
-            result = update_blog_post(
+            result = await update_blog_post(
                 post_id="test-id-123",
                 title="更新されたテスト記事",
                 content="<p>更新されたテスト本文</p>",
@@ -187,17 +190,19 @@ draft: false
             categories=["更新テスト"]
         )
     
-    def test_update_blog_post_no_updates(self):
+    @pytest.mark.asyncio
+    async def test_update_blog_post_no_updates(self):
         """更新項目なしエラーのテスト"""
-        result = update_blog_post(post_id="test-id-123")
+        result = await update_blog_post(post_id="test-id-123")
         
         assert "❌" in result
         assert "更新する項目を少なくとも1つ指定してください" in result
     
-    def test_get_blog_post_success(self, mock_blog_service):
+    @pytest.mark.asyncio
+    async def test_get_blog_post_success(self, mock_blog_service):
         """記事取得の正常フロー"""
         with patch('hatena_blog_mcp.service_factory.get_blog_service', return_value=mock_blog_service):
-            result = get_blog_post(post_id="test-id-123")
+            result = await get_blog_post(post_id="test-id-123")
         
         assert "📄 記事情報:" in result
         assert "取得テスト記事" in result
@@ -207,10 +212,11 @@ draft: false
         
         mock_blog_service.get_post.assert_called_once_with("test-id-123")
     
-    def test_list_blog_posts_success(self, mock_blog_service):
+    @pytest.mark.asyncio
+    async def test_list_blog_posts_success(self, mock_blog_service):
         """記事一覧取得の正常フロー"""
         with patch('hatena_blog_mcp.service_factory.get_blog_service', return_value=mock_blog_service):
-            result = list_blog_posts(limit=2)
+            result = await list_blog_posts(limit=2)
         
         assert "📚 ブログ記事一覧 (2件):" in result
         assert "📢 記事1" in result  # draft=False
@@ -220,22 +226,24 @@ draft: false
         
         mock_blog_service.list_posts.assert_called_once_with(limit=2)
     
-    def test_list_blog_posts_invalid_limit(self):
+    @pytest.mark.asyncio
+    async def test_list_blog_posts_invalid_limit(self):
         """無効なlimitパラメータのテスト"""
-        result = list_blog_posts(limit=0)
+        result = await list_blog_posts(limit=0)
         
         assert "❌" in result
         assert "limitは1以上100以下で指定してください" in result
         
-        result = list_blog_posts(limit=101)
+        result = await list_blog_posts(limit=101)
         
         assert "❌" in result
         assert "limitは1以上100以下で指定してください" in result
     
-    def test_create_blog_post_from_markdown_success(self, mock_blog_service, markdown_file):
+    @pytest.mark.asyncio
+    async def test_create_blog_post_from_markdown_success(self, mock_blog_service, markdown_file):
         """Markdown記事投稿の正常フロー"""
         with patch('hatena_blog_mcp.service_factory.get_blog_service', return_value=mock_blog_service):
-            result = create_blog_post_from_markdown(path=markdown_file)
+            result = await create_blog_post_from_markdown(path=markdown_file)
         
         assert "✅ Markdownから記事を投稿しました!" in result
         assert "Markdownテスト記事" in result
@@ -244,30 +252,33 @@ draft: false
         
         mock_blog_service.create_post_from_markdown.assert_called_once_with(markdown_file)
     
-    def test_create_blog_post_from_markdown_file_not_found(self):
+    @pytest.mark.asyncio
+    async def test_create_blog_post_from_markdown_file_not_found(self):
         """存在しないファイルのエラーテスト"""
-        result = create_blog_post_from_markdown(path="/nonexistent/file.md")
+        result = await create_blog_post_from_markdown(path="/nonexistent/file.md")
         
         assert "❌" in result
         assert "ファイルが見つかりません" in result
         assert "/nonexistent/file.md" in result
     
-    def test_create_blog_post_from_markdown_invalid_extension(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_create_blog_post_from_markdown_invalid_extension(self, tmp_path):
         """非Markdownファイルのエラーテスト"""
         txt_file = tmp_path / "test.txt"
         txt_file.write_text("テストファイル")
         
-        result = create_blog_post_from_markdown(path=str(txt_file))
+        result = await create_blog_post_from_markdown(path=str(txt_file))
         
         assert "❌" in result
         assert "Markdownファイル（.md）を指定してください" in result
     
-    def test_error_classification_auth_error(self, mock_blog_service):
+    @pytest.mark.asyncio
+    async def test_error_classification_auth_error(self, mock_blog_service):
         """認証エラーの分類テスト"""
         mock_blog_service.create_post.side_effect = Exception("WSSE authentication failed")
         
         with patch('hatena_blog_mcp.service_factory.get_blog_service', return_value=mock_blog_service):
-            result = create_blog_post(
+            result = await create_blog_post(
                 title="テスト記事",
                 content="<p>テスト本文</p>"
             )
@@ -277,12 +288,13 @@ draft: false
         assert "HATENA_USER_ID" in result
         assert "📋 エラーコード: AUTH_FAILED" in result
     
-    def test_error_classification_network_error(self, mock_blog_service):
+    @pytest.mark.asyncio
+    async def test_error_classification_network_error(self, mock_blog_service):
         """ネットワークエラーの分類テスト"""
         mock_blog_service.create_post.side_effect = Exception("Connection timeout")
         
         with patch('hatena_blog_mcp.service_factory.get_blog_service', return_value=mock_blog_service):
-            result = create_blog_post(
+            result = await create_blog_post(
                 title="テスト記事",
                 content="<p>テスト本文</p>"
             )
@@ -292,12 +304,13 @@ draft: false
         assert "インターネット接続を確認" in result
         assert "📋 エラーコード: NETWORK_FAILED" in result
     
-    def test_error_classification_rate_limit_error(self, mock_blog_service):
+    @pytest.mark.asyncio
+    async def test_error_classification_rate_limit_error(self, mock_blog_service):
         """API制限エラーの分類テスト"""
         mock_blog_service.create_post.side_effect = Exception("Rate limit exceeded")
         
         with patch('hatena_blog_mcp.service_factory.get_blog_service', return_value=mock_blog_service):
-            result = create_blog_post(
+            result = await create_blog_post(
                 title="テスト記事",
                 content="<p>テスト本文</p>"
             )
@@ -337,11 +350,12 @@ draft: false
         
         await cleanup_services()
     
-    def test_comprehensive_workflow(self, mock_blog_service, markdown_file):
+    @pytest.mark.asyncio
+    async def test_comprehensive_workflow(self, mock_blog_service, markdown_file):
         """包括的なワークフローテスト"""
         with patch('hatena_blog_mcp.service_factory.get_blog_service', return_value=mock_blog_service):
             # 1. 記事作成
-            create_result = create_blog_post(
+            create_result = await create_blog_post(
                 title="ワークフローテスト",
                 content="<p>テスト内容</p>",
                 categories=["テスト"]
@@ -349,22 +363,22 @@ draft: false
             assert "✅ 記事を投稿しました!" in create_result
             
             # 2. 記事取得
-            get_result = get_blog_post(post_id="test-id-123")
+            get_result = await get_blog_post(post_id="test-id-123")
             assert "📄 記事情報:" in get_result
             
             # 3. 記事更新
-            update_result = update_blog_post(
+            update_result = await update_blog_post(
                 post_id="test-id-123",
                 title="更新されたタイトル"
             )
             assert "✅ 記事を更新しました!" in update_result
             
             # 4. 一覧取得
-            list_result = list_blog_posts(limit=5)
+            list_result = await list_blog_posts(limit=5)
             assert "📚 ブログ記事一覧" in list_result
             
             # 5. Markdown投稿
-            markdown_result = create_blog_post_from_markdown(path=markdown_file)
+            markdown_result = await create_blog_post_from_markdown(path=markdown_file)
             assert "✅ Markdownから記事を投稿しました!" in markdown_result
         
         # 各サービスメソッドが呼び出されたことを確認
