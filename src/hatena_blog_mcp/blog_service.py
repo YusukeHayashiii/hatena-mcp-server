@@ -84,6 +84,7 @@ class BlogPostService:
         categories: Optional[List[str]] = None,
         author: Optional[str] = None,
         summary: Optional[str] = None,
+        draft: Optional[bool] = None,
     ) -> BlogPost:
         """記事を新規作成します（content は HTML 想定）。
 
@@ -97,6 +98,7 @@ class BlogPostService:
             categories=categories or [],
             author=author,
             summary=summary,
+            draft=draft,
         )
         entry_xml = self.xml.create_entry_xml(blog_post)
         response = await self.client.post("/entry", entry_xml)
@@ -157,7 +159,8 @@ class BlogPostService:
 
     async def delete_post(self, post_id: str) -> bool:
         """記事を削除します。成功時 True を返します。"""
-        path = f"/entry/{post_id}"
+        numeric_id = self._extract_numeric_id(post_id)
+        path = f"/entry/{numeric_id}"
         response = await self.client.delete(path)
         return response.status_code in (200, 202, 204)
 
@@ -189,6 +192,7 @@ class BlogPostService:
                 categories=blog_post.categories,
                 summary=blog_post.summary,
                 author=blog_post.author,
+                draft=blog_post.draft,
             )
             
         except (FileNotFoundError, ValueError) as e:

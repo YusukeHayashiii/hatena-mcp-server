@@ -107,7 +107,7 @@ uv run src/hatena_blog_mcp/server.py
 - 再起動後、接続に成功すると `hatena-mcp` のツール群が利用可能になります
 
 3) 動作確認
-- ツール一覧に `create_blog_post`, `update_blog_post`, `get_blog_post`, `list_blog_posts`, `create_blog_post_from_markdown` が表示されること
+- ツール一覧に `create_blog_post`, `update_blog_post`, `get_blog_post`, `list_blog_posts`, `create_blog_post_from_markdown`, `delete_blog_post` が表示されること
 - 例（一覧取得の依頼）:
 ```text
 list_blog_posts(limit=5) を実行してください
@@ -160,7 +160,7 @@ create_blog_post(
 - `limit` (任意): 取得する記事数の上限（デフォルト: 10、最大: 100）
 
 ### `create_blog_post_from_markdown`
-Markdownファイルから記事を投稿します。
+Markdownファイルから記事を投稿します。Front Matter の `draft: true` で下書き投稿に対応します。
 
 **パラメータ:**
 - `path` (必須): Markdownファイルのパス
@@ -170,12 +170,21 @@ Markdownファイルから記事を投稿します。
 ---
 title: 記事のタイトル
 categories: [技術, Python]
+draft: true
 ---
 
 # 記事本文
 
 Markdownで記述された本文がHTMLに変換されます。
 ```
+
+> **下書きフラグについて**: 下書き指定は AtomPub 標準の `<app:control><app:draft>yes</app:draft></app:control>` で送信します（旧実装の `<hatena:draft>` は誤りで下書きが効かず即公開されていたため修正済み）。記事取得時は `app:draft` を優先し、旧 `hatena:draft` もフォールバックで参照します。
+
+### `delete_blog_post`
+指定したIDのブログ記事を削除します。
+
+**パラメータ:**
+- `post_id` (必須): 削除する記事のID（簡単ID・完全IDのどちらも指定可能）
 
 ## 🧪 テスト
 
