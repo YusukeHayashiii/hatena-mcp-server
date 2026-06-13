@@ -179,6 +179,7 @@ MCPクライアントに公開されるツール：
 | update_blog_post | 記事更新 | post_id: str, title: str, content: str | post_url: str, updated_at: str |
 | get_blog_post | 記事取得 | post_id: str | title: str, content: str, categories: list[str] |
 | list_blog_posts | 記事一覧取得 | limit: int | posts: list[BlogPost] |
+| delete_blog_post | 記事削除 | post_id: str（簡単ID/完全ID） | success: bool |
 
 #### Optional Tools (Markdown)
 | Tool Name | Purpose | Parameters | Returns |

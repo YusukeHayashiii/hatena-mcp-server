@@ -286,6 +286,37 @@ async def create_blog_post_from_markdown(
     return await _create_blog_post_from_markdown()
 
 
+@mcp.tool()
+async def delete_blog_post(
+    post_id: Annotated[str, "削除する記事のID（簡単ID/完全IDどちらも可）"],
+) -> str:
+    """指定したIDのブログ記事を削除します"""
+
+    from hatena_blog_mcp.error_handler import handle_mcp_errors, validate_required_params
+
+    @handle_mcp_errors
+    async def _delete_blog_post():
+        logger.info(f"Deleting blog post: {post_id}")
+
+        # パラメータ検証
+        params = {"post_id": post_id}
+        validation_error = validate_required_params(params, ["post_id"])
+        if validation_error:
+            raise ValueError(validation_error)
+
+        from hatena_blog_mcp.service_factory import get_blog_service
+
+        service = get_blog_service()
+
+        success = await service.delete_post(post_id)
+
+        if success:
+            return f"🗑️ 記事を削除しました!\n🆔 記事ID: {post_id}"
+        return f"⚠️ 記事の削除に失敗しました。\n🆔 記事ID: {post_id}"
+
+    return await _delete_blog_post()
+
+
 async def cleanup_on_exit():
     """サーバー終了時のクリーンアップ処理"""
     from hatena_blog_mcp.service_factory import cleanup_services

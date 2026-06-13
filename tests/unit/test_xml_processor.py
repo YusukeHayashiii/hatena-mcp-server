@@ -48,9 +48,9 @@ class TestAtomPubProcessor:
         
         # XML要素の存在確認
         assert entry.tag == f"{{{processor.ATOM_NS}}}entry"
-        
+
         # 名前空間設定
-        ns = {'atom': processor.ATOM_NS, 'hatena': processor.HATENA_NS}
+        ns = {'atom': processor.ATOM_NS, 'hatena': processor.HATENA_NS, 'app': processor.APP_NS}
         
         # タイトル
         title = entry.find('.//atom:title', ns)
@@ -90,8 +90,8 @@ class TestAtomPubProcessor:
         assert updated is not None
         assert "2024-01-02T15:30:00" in updated.text
         
-        # 下書きフラグ
-        draft = entry.find('.//hatena:draft', ns)
+        # 下書きフラグ（AtomPub app:control/app:draft）
+        draft = entry.find('.//app:control/app:draft', ns)
         assert draft is not None
         assert draft.text == "no"
 
@@ -126,9 +126,9 @@ class TestAtomPubProcessor:
         )
         
         entry = processor.create_entry_xml(draft_post)
-        
-        ns = {'atom': processor.ATOM_NS, 'hatena': processor.HATENA_NS}
-        draft = entry.find('.//hatena:draft', ns)
+
+        ns = {'atom': processor.ATOM_NS, 'hatena': processor.HATENA_NS, 'app': processor.APP_NS}
+        draft = entry.find('.//app:control/app:draft', ns)
         assert draft is not None
         assert draft.text == "yes"
 

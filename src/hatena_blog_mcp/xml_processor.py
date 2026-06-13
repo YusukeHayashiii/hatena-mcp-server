@@ -23,20 +23,25 @@ class AtomPubProcessor:
     # AtomPub名前空間
     ATOM_NS = "http://www.w3.org/2005/Atom"
     HATENA_NS = "http://www.hatena.ne.jp/info/xmlns#"
-    
+    APP_NS = "http://www.w3.org/2007/app"
+
     # 名前空間マップ
     NSMAP = {
         None: ATOM_NS,  # デフォルト名前空間
-        "hatena": HATENA_NS
+        "hatena": HATENA_NS,
+        "app": APP_NS
     }
-    
+
     def __init__(self):
         """AtomPub XMLプロセッサーを初期化します"""
         # ElementMakerを作成（Atom名前空間用）
         self.E = ElementMaker(namespace=self.ATOM_NS, nsmap=self.NSMAP)
-        
+
         # はてな名前空間用のElementMaker
         self.H = ElementMaker(namespace=self.HATENA_NS, nsmap=self.NSMAP)
+
+        # AtomPub control名前空間用のElementMaker（下書きフラグ等）
+        self.A = ElementMaker(namespace=self.APP_NS, nsmap=self.NSMAP)
 
     def create_entry_xml(self, blog_post: BlogPost) -> etree._Element:
         """
@@ -95,11 +100,10 @@ class AtomPubProcessor:
             now = datetime.now(timezone.utc).isoformat()
             entry.append(self.E.updated(now))
         
-        # はてな固有の設定
+        # 下書きフラグ（AtomPub app:control/app:draft）
         if blog_post.draft is not None:
-            # 下書きフラグ
             draft_value = "yes" if blog_post.draft else "no"
-            entry.append(self.H.draft(draft_value))
+            entry.append(self.A.control(self.A.draft(draft_value)))
         
         # ID（更新時のみ）
         if blog_post.id:
@@ -152,7 +156,7 @@ class AtomPubProcessor:
                 raise
 
         # 名前空間を考慮した要素検索用
-        ns = {'atom': self.ATOM_NS, 'hatena': self.HATENA_NS}
+        ns = {'atom': self.ATOM_NS, 'hatena': self.HATENA_NS, 'app': self.APP_NS}
         
         # 必須要素の取得
         title_elem = entry.find('.//atom:title', ns)
@@ -212,8 +216,10 @@ class AtomPubProcessor:
             except ValueError:
                 logger.warning(f"更新日時の解析に失敗: {updated_elem.text}")
         
-        # 下書きフラグ（はてな固有）
-        draft_elem = entry.find('.//hatena:draft', ns)
+        # 下書きフラグ（AtomPub app:control/app:draft、旧hatena:draftもフォールバックで参照）
+        draft_elem = entry.find('.//app:control/app:draft', ns)
+        if draft_elem is None:
+            draft_elem = entry.find('.//hatena:draft', ns)
         if draft_elem is not None and draft_elem.text:
             blog_post.draft = draft_elem.text.lower() == "yes"
         
@@ -282,7 +288,7 @@ class AtomPubProcessor:
                 raise
 
         # 名前空間を考慮した要素検索用
-        ns = {'atom': self.ATOM_NS, 'hatena': self.HATENA_NS}
+        ns = {'atom': self.ATOM_NS, 'hatena': self.HATENA_NS, 'app': self.APP_NS}
         
         # エントリ要素を全て取得
         entry_elems = feed.findall('.//atom:entry', ns)
