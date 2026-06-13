@@ -62,6 +62,8 @@ Kiro-style Spec Driven Development implementation using claude code slash comman
 11. **Session structure**: Separate AI-assisted work from human project management tasks
 12. **Reference analysis**: Research similar projects during design phase
 13. **Library verification**: Test imports and usage patterns before main implementation
+14. **Git remote / push は必ず SSH を使う**: このPCはHTTPS認証情報を持たず、GitHubへはSSH鍵で接続している。`git push` 前に origin が SSH 形式（`git@github.com:YusukeHayashiii/hatena-mcp-server.git`）になっていることを確認すること。HTTPS（`https://github.com/...`）になっていたら `git remote set-url origin git@github.com:YusukeHayashiii/hatena-mcp-server.git` で切り替えてからプッシュする。HTTPSのままだと `could not read Username for 'https://github.com'` で失敗する。
+15. **Git identity**: コミット時の author は `YusukeHayashiii <86298092+YusukeHayashiii@users.noreply.github.com>`。未設定（`Author identity unknown`）なら `git config user.name` / `git config user.email` でローカル設定してからコミットする。
 
 ## Steering Configuration
 
