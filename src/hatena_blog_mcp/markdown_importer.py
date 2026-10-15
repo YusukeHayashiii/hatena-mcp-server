@@ -10,6 +10,7 @@ Features:
 - Support for categories and draft status
 """
 
+import re
 from pathlib import Path
 from typing import Optional, Union, Dict, Any
 from datetime import datetime
@@ -18,6 +19,11 @@ import markdown
 import frontmatter
 
 from .models import BlogPost
+
+
+FENCE_PATTERN = re.compile(r'^\s*(```|~~~)')
+FOOTNOTE_DEF_PATTERN = re.compile(r'^\[\^([^\]]+)\]:\s?(.*)$')
+FOOTNOTE_REF_PATTERN = re.compile(r'\[\^([^\]]+)\]')
 
 
 class MarkdownImporter:
@@ -42,7 +48,11 @@ class MarkdownImporter:
                 'fenced_code',
                 'tables', 
                 'toc',
-                'nl2br'
+                'nl2br',
+                # Footnotes are normally rewritten to Hatena notation beforehand
+                # (see _to_hatena_footnotes). This keeps leftovers from being
+                # parsed as reference links.
+                'footnotes'
             ]
         )
     
@@ -100,7 +110,7 @@ class MarkdownImporter:
             
             # Convert Markdown to HTML
             self.markdown_processor.reset()
-            html_content = self.markdown_processor.convert(content)
+            html_content = self.markdown_processor.convert(self._to_hatena_footnotes(content))
             
             # Extract title
             title = self._extract_title(metadata, content, filename)
@@ -126,6 +136,49 @@ class MarkdownImporter:
         except Exception as e:
             raise ValueError(f"Failed to convert Markdown: {e}")
     
+    def _to_hatena_footnotes(self, content: str) -> str:
+        """Rewrite Markdown footnotes ([^id] / [^id]: text) to Hatena ((text)) notation.
+
+        Hatena expands ((text)) into its native footnote at display time, which
+        matches the blog theme. Fenced code blocks are left untouched, and
+        references without a definition are kept as-is.
+        """
+        lines = content.split('\n')
+        in_fence = False
+        is_code = []
+        for line in lines:
+            if FENCE_PATTERN.match(line):
+                is_code.append(True)
+                in_fence = not in_fence
+            else:
+                is_code.append(in_fence)
+
+        # Collect definitions (indented lines continue the previous definition)
+        notes: Dict[str, str] = {}
+        kept: list[tuple[str, bool]] = []
+        current: Optional[str] = None
+        for line, code in zip(lines, is_code):
+            if not code:
+                match = FOOTNOTE_DEF_PATTERN.match(line)
+                if match:
+                    current = match.group(1)
+                    notes[current] = match.group(2).strip()
+                    continue
+                if current and line.startswith(('    ', '\t')) and line.strip():
+                    notes[current] = f"{notes[current]} {line.strip()}"
+                    continue
+            current = None
+            kept.append((line, code))
+
+        def replace(match: re.Match) -> str:
+            note = notes.get(match.group(1))
+            return f"(({note}))" if note is not None else match.group(0)
+
+        return '\n'.join(
+            line if code else FOOTNOTE_REF_PATTERN.sub(replace, line)
+            for line, code in kept
+        )
+
     def _extract_title(self, metadata: Dict[str, Any], content: str, filename: Optional[str]) -> str:
         """Extract title from metadata, H1 heading, or filename.
         

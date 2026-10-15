@@ -286,6 +286,41 @@ def hello():
         assert "<code" in result.content
         assert "<blockquote>" in result.content
     
+    def test_footnotes_become_hatena_notation(self):
+        """Test that [^n] footnotes become Hatena ((...)) notation inline."""
+        markdown_text = """本文[^1]です。続き[^note]。
+
+[^1]: 脚注の文章
+[^note]: 二つ目の
+    続きの行
+"""
+        result = self.importer.convert(markdown_text)
+
+        assert "本文((脚注の文章))です。" in result.content
+        assert "続き((二つ目の 続きの行))。" in result.content
+        assert "[^" not in result.content
+        assert "<sup" not in result.content
+        assert 'href="脚注の文章"' not in result.content
+
+    def test_footnotes_in_code_blocks_are_untouched(self):
+        """Test that footnote-like text inside fenced code is kept as-is."""
+        markdown_text = """```
+a[^1]
+[^1]: not a footnote
+```
+"""
+        result = self.importer.convert(markdown_text)
+
+        assert "a[^1]" in result.content
+        assert "[^1]: not a footnote" in result.content
+        assert "((" not in result.content
+
+    def test_undefined_footnote_reference_is_kept(self):
+        """Test that a reference without a definition is left as text."""
+        result = self.importer.convert("本文[^9]です。")
+
+        assert "本文[^9]です。" in result.content
+
     def test_blogpost_attributes(self):
         """Test that BlogPost object has correct attributes."""
         result = self.importer.convert("# Test")
